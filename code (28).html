@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrição Clínica Avançada: Estratégias e Insights - por Vinicius Rocha</title>
+    <!-- Fontes Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Ícones Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        /* style.css EMBUTIDO - v11 Final com Ícones Coloridos */
+        :root {
+             --premier-blue-dark: #001E40; --premier-blue-medium: #005A9C; --premier-blue-nav: #004075; --premier-blue-light: #F0F8FF; --premier-blue-hover-light: #e0effa; --premier-grey-text: #343a40; --premier-grey-medium: #6c757d; --premier-grey-light: #f8f9fa; --premier-grey-border: #e2e8f0; --premier-white: #ffffff; --premier-accent: #FFA726; --premier-accent-dark: #F57C00; --link-color: #005A9C; --link-hover-color: #003366; --sidebar-width: 300px; --body-bg: #f9fafb; --header-height: 65px; --nav-height: 50px; --border-radius-base: 8px; --box-shadow-base: 0 4px 15px rgba(0, 30, 64, 0.06);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: var(--body-bg); color: var(--premier-grey-text); line-height: 1.8; font-weight: 400; overflow-x: hidden; padding-top: calc(var(--header-height) + var(--nav-height)); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-size: 17px;
+        }
+        @media (max-width: 768px) { body { font-size: 16px; }}
+        body.sidebar-open { overflow: hidden; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', sans-serif; font-weight: 600; color: var(--premier-blue-dark); line-height: 1.4; margin-top: 0; margin-bottom: 1rem;}
+        h2 { font-size: 2rem; } h3 { font-size: 1.6rem; } h4 { font-size: 1.25rem; }
+        @media (max-width: 768px) { h2 { font-size: 1.75rem; } h3 { font-size: 1.4rem; } h4 { font-size: 1.15rem; } }
+
+        /* --- Header, Sidebar, Overlay, Main Nav --- */
+        /* ... (Estilos da v10 permanecem iguais) ... */
+          #universal-header { display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background-color: var(--premier-blue-dark); color: var(--premier-white); padding: 0 1rem; z-index: 1001; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+          #sidebar-open-btn { background: none; border: none; color: var(--premier-white); font-size: 1.8rem; cursor: pointer; padding: 0.5rem; line-height: 1; order: 1; transition: color 0.2s ease; }
+          #sidebar-open-btn:hover { color: var(--premier-accent); }
+          #header-title { order: 2; flex-grow: 1; text-align: center; font-size: 1.1rem; margin: 0; color: var(--premier-white); font-weight: 600; font-family: 'Poppins', sans-serif; padding-right: 45px; }
+          #universal-header > div:last-child { width: 45px;}
+          #sidebar { position: fixed; left: 0; top: 0; width: var(--sidebar-width); height: 100%; background-color: var(--premier-white); border-right: 1px solid var(--premier-grey-border); padding: 1.5rem; padding-top: calc(var(--header-height) + 1.5rem); overflow-y: auto; z-index: 1003; transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 5px 0 20px rgba(0,0,0,0.15); transform: translateX(-105%); }
+          body.sidebar-open #sidebar { transform: translateX(0); }
+          #sidebar h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; border-bottom: 2px solid var(--premier-blue-light); padding-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px;}
+          #sidebar ul { list-style: none; padding: 0; margin: 0; }
+          #sidebar li { margin-bottom: 0.4rem; }
+          #sidebar a { color: var(--link-color); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; padding: 0.7rem 0.8rem; border-radius: var(--border-radius-base); transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.2s ease; }
+          #sidebar a:hover { background-color: var(--premier-blue-hover-light); color: var(--link-hover-color); padding-left: 1.2rem; }
+          #sidebar a .bi { /* Estilo para ícones na sidebar */ margin-right: 0.8rem; font-size: 1.1em; color: var(--premier-blue-medium); vertical-align: middle; }
+          #sidebar-close-btn { display: block; position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.8rem; color: var(--premier-grey-medium); cursor: pointer; line-height: 1; padding: 0.3rem; transition: color 0.2s ease;}
+          #sidebar-close-btn:hover { color: var(--premier-blue-dark); }
+          #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 20, 40, 0.7); z-index: 1002; backdrop-filter: blur(3px); }
+          body.sidebar-open #overlay { display: block; }
+          nav#main-nav { background-color: var(--premier-nav); padding: 0 0.5rem; text-align: center; position: fixed; top: var(--header-height); left: 0; width: 100%; height: var(--nav-height); z-index: 1000; box-shadow: 0 3px 6px rgba(0,0,0,0.08); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; align-items: center; border-bottom: 1px solid var(--premier-grey-border); }
+          nav#main-nav::-webkit-scrollbar { display: none; }
+          nav#main-nav a { color: var(--premier-blue-dark); text-decoration: none; padding: 0.6rem 1.1rem; margin: 0 0.3rem; border-radius: 6px; transition: background-color 0.3s ease, color 0.3s ease; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; display: inline-block; border: 1px solid transparent; font-family: 'Poppins', sans-serif; letter-spacing: 0.5px; }
+          nav#main-nav a:hover { background-color: var(--premier-blue-light); color: var(--premier-blue-dark); }
+          nav#main-nav a.active { background-color: var(--premier-blue-medium); color: var(--premier-white); border-color: transparent; }
+
+
+        /* --- Conteúdo Principal --- */
+        /* ... (Estilos da v10 permanecem iguais) ... */
+         main { max-width: 1050px; margin: 3rem auto; padding: 0 1.5rem; }
+         @media (max-width: 992px) { main { padding: 1rem; margin-top: 2rem; margin-bottom: 2rem; } }
+
+
+        /* --- Estilos de Conteúdo (Refinado) --- */
+        /* ... (Estilos gerais da v10) ... */
+         .page-content { display: none; animation: pageFadeIn 0.5s ease-out; }
+         .page-content.active { display: block; }
+         @keyframes pageFadeIn { from { opacity: 0; } to { opacity: 1; } }
+         section { background-color: var(--premier-white); padding: 2.5rem 3rem; margin-bottom: 2.5rem; border-radius: var(--border-radius-base); box-shadow: var(--box-shadow-base); border: 1px solid var(--premier-grey-border); }
+         section h2 { font-size: 1.9rem; margin-bottom: 1.8rem; padding-bottom: 0.7rem; border-bottom: 3px solid var(--premier-blue-medium); display: inline-block; }
+         section h3 { color: var(--premier-blue-medium); font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 600; }
+         p, ul > li { font-size: 1.05rem; color: var(--premier-grey-text); margin-bottom: 1.3rem; line-height: 1.85; }
+         ul { padding-left: 0; list-style: none; }
+         ul > li { margin-bottom: 0.8rem; position: relative; padding-left: 28px; }
+         ul > li::before { content: ''; position: absolute; left: 5px; top: 0.7em; width: 8px; height: 8px; background-color: var(--premier-accent); border-radius: 50%; }
+         strong, b { font-weight: 700; color: var(--premier-blue-dark); }
+         a { color: var(--link-color); text-decoration: none; font-weight: 600; transition: color 0.2s ease; } a:hover { color: var(--link-hover-color); text-decoration: underline; }
+         .highlight-box { background-color: var(--premier-blue-light); border-left: 5px solid var(--premier-accent); padding: 1.8rem; margin: 2.5rem 0; border-radius: 6px; }
+         .highlight-box h3 { margin-top: 0; color: var(--premier-blue-dark); border-bottom: none; font-size: 1.3rem; } .highlight-box p:last-child { margin-bottom: 0; }
+         .accordion { margin-top: 1.5rem; border-radius: var(--border-radius-base); overflow: hidden; border: 1px solid var(--premier-grey-border); }
+         .accordion-button { background-color: #fff; color: var(--premier-blue-dark); cursor: pointer; padding: 1.1rem 1.5rem; width: 100%; border: none; border-bottom: 1px solid var(--premier-grey-border); text-align: left; outline: none; font-size: 1.05rem; transition: background-color 0.3s ease; font-weight: 600; font-family: 'Poppins', sans-serif; display: flex; justify-content: space-between; align-items: center; }
+         .accordion:last-child .accordion-button { border-bottom: none; }
+         .accordion-button:hover { background-color: var(--premier-blue-light); }
+         .accordion-button.active-accordion { background-color: var(--premier-blue-medium); color: var(--premier-white); border-bottom-color: var(--premier-blue-medium); }
+         .accordion-button::after { content: '+'; font-size: 1.5rem; color: var(--premier-grey-medium); transition: transform 0.3s ease, color 0.3s ease; }
+         .accordion-button.active-accordion::after { content: "–"; transform: rotate(180deg); color: var(--premier-white); }
+         .accordion-content { padding: 0 1.5rem; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out, padding 0.4s ease-out; }
+         .accordion-content.open { padding: 1.5rem; border-top: 1px solid var(--premier-grey-border); }
+         .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 2rem 0; border: 1px solid var(--premier-grey-border); border-radius: var(--border-radius-base); box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+         table { width: 100%; border-collapse: collapse; background-color: var(--premier-white); }
+         th, td { padding: 0.9rem 1.1rem; text-align: left; border-bottom: 1px solid var(--premier-grey-border); font-size: 0.9rem; }
+         td { white-space: nowrap; vertical-align: middle; color: var(--premier-grey-text); }
+         th { background-color: var(--premier-blue-light); color: var(--premier-blue-dark); font-weight: 600; text-transform: uppercase; font-size: 0.7rem; border-bottom-width: 2px; white-space: nowrap; vertical-align: middle; letter-spacing: 0.5px; }
+         tbody tr { transition: background-color 0.2s ease; }
+         tbody tr:last-child td { border-bottom: none; }
+         tbody tr:nth-child(even) { background-color: #fdfdfe; }
+         tbody tr:hover { background-color: var(--premier-blue-hover-light); }
+         tfoot td { font-style: italic; font-size: 0.85rem; color: var(--premier-grey-medium); text-align: right; background-color: var(--premier-white); border-top: 1px solid var(--premier-grey-border); padding: 0.8rem 1rem; white-space: nowrap; }
+         @media (max-width: 768px) { td, th { white-space: normal; padding: 0.7rem 0.5rem; font-size: 0.85rem;} th {font-size: 0.7rem;} }
+
+        /* --- Estilos Seção Produtos Úmidos --- */
+        /* ... (Estilos da v10 com ajuste imagem) ... */
+          .product-line-section { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--premier-grey-border); }
+          .product-line-section:last-child { border-bottom: none; }
+          .product-line-title { font-size: 2.3rem; text-align: center; margin-bottom: 1rem; color: var(--premier-blue-dark); }
+          .product-line-subtitle { font-size: 1.25rem; text-align: center; margin-bottom: 3rem; color: var(--premier-grey-medium); font-weight: 400; }
+          .product-category-title { font-size: 1.7rem; color: var(--premier-blue-medium); margin-bottom: 1.8rem; border-bottom: 2px solid var(--premier-blue-light); padding-bottom: 0.5rem; display: inline-block; }
+          .product-card { display: flex; flex-direction: column; background-color: var(--premier-white); border-radius: var(--border-radius-base); box-shadow: var(--box-shadow-base); margin-bottom: 2.5rem; border: 1px solid var(--premier-grey-border); transition: box-shadow 0.3s ease, transform 0.3s ease; }
+          .product-card:hover { box-shadow: 0 10px 25px rgba(0, 30, 64, 0.12); transform: translateY(-5px); }
+          .product-card-image { padding: 1rem; text-align: center; border-bottom: 1px solid var(--premier-grey-border); background-color: var(--premier-white); min-height: 220px; display: flex; align-items: center; justify-content: center; border-top-left-radius: var(--border-radius-base); border-top-right-radius: var(--border-radius-base); overflow: hidden; }
+          .product-card-image img { max-width: 90%; max-height: 180px; height: auto; display: block; object-fit: contain; margin: auto;}
+          .product-card-content { padding: 2rem; }
+          .product-card h4 { font-size: 1.35rem; font-weight: 700; margin-top: 0; margin-bottom: 0.6rem; }
+          .product-card .indication { font-size: 0.9rem; margin-bottom: 1.3rem; color: var(--premier-grey-medium); font-style: italic; }
+          .product-card .benefits-title { font-weight: 700; color: var(--premier-blue-dark); margin-bottom: 0.8rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; }
+          .product-card ul > li { margin-bottom: 0.7rem; font-size: 0.95rem; }
+          .product-card ul > li::before { top: 0.55em; }
+          .product-card .notes { font-size: 0.8rem; color: var(--premier-grey-medium); margin-top: 1.2rem; }
+          @media (min-width: 768px) { .product-card { flex-direction: row; align-items: stretch;} .product-card-image { flex: 0 0 240px; border-right: 1px solid var(--premier-grey-border); border-bottom: none; border-top-right-radius: 0; border-bottom-left-radius: var(--border-radius-base); min-height: 260px;} .product-card-image img { max-height: 200px; } .product-card-content { flex: 1; padding: 2rem 2.5rem; display: flex; flex-direction: column; justify-content: center; } }
+          #gourmet-vs-formula { background-color: var(--premier-blue-light); } #gourmet-vs-formula h4 { color: var(--premier-blue-medium); }
+          .formula-vs-gourmet-images { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; min-height: 150px; }
+          .formula-vs-gourmet-images img { max-width: 45%; height: auto; max-height: 120px; object-fit: contain;}
+          .formula-vs-gourmet-images span { font-size: 1.5rem; font-weight: bold; color: var(--premier-blue-medium); flex-basis: 100%; text-align: center; margin-top: 0.5rem; }
+          @media (min-width: 480px) { .formula-vs-gourmet-images span { flex-basis: auto; margin-top: 0;} }
+
+        /* --- Seção Recuperação Benefícios (Aprimorado) --- */
+        .recovery-benefits { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2rem; text-align: center; margin: 3rem 0; padding: 2rem 0; border-top: 1px solid var(--premier-grey-border); border-bottom: 1px solid var(--premier-grey-border); }
+        .recovery-benefit-item { padding: 1rem 0.5rem; }
+        .recovery-benefit-item img { display: block; width: 70px; /* Tamanho fixo */ height: 70px; margin: 0 auto 1rem auto; object-fit: contain; /* Garante proporção */ }
+        .recovery-benefit-item h4 { font-size: 1rem; margin-bottom: 0.5rem; font-weight: 700; color: var(--premier-blue-dark); }
+        .recovery-benefit-item p { font-size: 0.9rem; color: var(--premier-grey-medium); margin-bottom: 0; line-height: 1.6; }
+
+        /* --- Seção Níveis de Garantia Selecionados (Aprimorado) --- */
+         .nutritional-highlights { background-color: var(--premier-blue-light); padding: 1.5rem 2rem; border-radius: var(--border-radius-base); margin-top: 2rem; border: 1px solid var(--premier-blue-medium);}
+         .nutritional-highlights h4 { margin-top: 0; margin-bottom: 1.5rem; color: var(--premier-blue-dark); font-size: 1.1rem; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
+         .nutritional-highlights ul { list-style: none; padding: 0; margin: 0; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 1rem; }
+         .nutritional-highlights li { background-color: var(--premier-white); padding: 0.8rem 1rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; flex-basis: calc(33% - 1rem); min-width: 130px; font-size: 0.9rem; color: var(--premier-grey-text); margin-bottom: 0; padding-left: 1rem;}
+         .nutritional-highlights li::before { display: none; }
+         .nutritional-highlights li strong { display: block; font-size: 1.1rem; color: var(--premier-blue-medium); margin-bottom: 0.2rem; font-family: 'Poppins';}
+         @media (max-width: 576px) { .nutritional-highlights li {flex-basis: calc(50% - 0.5rem);} }
+
+         /* --- Atribuição de Fonte --- */
+         .source-attribution { font-size: 0.8rem; color: var(--premier-grey-medium); margin-top: 1.5rem; border-top: 1px solid var(--premier-grey-border); padding-top: 1rem; text-align: center;}
+         .source-attribution a { color: var(--premier-grey-medium); }
+
+
+        /* --- Estilos Subseções (Recursos, Referências, Parceria) --- */
+        /* ... (Estilos da v10 com pequenos ajustes) ... */
+         .subsection { padding-top: 2.5rem; border-top: 1px solid #e0e0e0; margin-top: 2.5rem; }
+         .subsection:first-of-type { border-top: none; margin-top: 0; padding-top: 0;}
+         .subsection h3 { font-size: 1.5rem; color: var(--premier-blue-medium); margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--premier-blue-light); }
+         #recursos ul, #referencias ul { margin-top: 0; list-style: none; padding: 0;}
+         #recursos li, #referencias li { background-color: var(--premier-white); box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid var(--premier-grey-border); border-radius: var(--border-radius-base); padding: 1.2rem 1.5rem; margin-bottom: 1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; display: flex; align-items: flex-start; }
+         #recursos li:hover, #referencias li:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+         #recursos li i { color: var(--premier-blue-medium); font-size: 1.3rem; margin-right: 0.8rem; margin-top: 0.1rem; width: 1.5em; /* Alinha o texto */ text-align: center;} /* Estilo para ícones BOOTSTRAP */
+         #referencias li::before { content: '📚'; font-size: 1.2rem; margin-right: 1rem; color: var(--premier-blue-medium); line-height: 1.5; margin-top: 0.1rem;}
+         #recursos .link-content, #referencias .ref-content { flex: 1; }
+         #recursos li strong, #referencias li strong { font-size: 1.05rem; font-family: 'Poppins', sans-serif; display: block; margin-bottom: 0.3rem; color: var(--premier-blue-dark);}
+         #recursos li a, #referencias li span { font-size: 0.95rem; font-weight: 400; color: var(--premier-grey-text);}
+         #recursos li a { color: var(--link-color); text-decoration: underline; word-break: break-all; }
+         #recursos li a:hover { color: var(--link-hover-color); }
+         #referencias li span { display: block; font-size: 0.9rem; line-height: 1.6;}
+         #recursos .distribuidor-link li { background-color: var(--premier-blue-light); border-color: var(--premier-blue-medium); }
+         #recursos .distribuidor-link li i::before { content: '\F23F'; /* Bootstrap cart */ }
+         .subsection-action { margin-top: 1.5rem; text-align: left;}
+         .subsection-action .cta-button { font-size: 0.9rem; padding: 0.7rem 1.8rem; }
+
+        /* Seção Parceria (Refinada) */
+        #parceria-premiervet { background: linear-gradient(135deg, var(--premier-blue-dark) 0%, var(--premier-blue-medium) 100%); color: var(--premier-white); padding: 3.5rem 1.5rem; border-radius: 12px; text-align: center; margin: 3rem 0; overflow: hidden; position: relative;}
+        #parceria-premiervet h2 { color: var(--premier-white); font-size: 2.2rem; margin-bottom: 1.5rem; border-bottom: 3px solid var(--premier-accent); display: inline-block; padding-bottom: 0.5rem; }
+        #parceria-premiervet > p { font-size: 1.1rem; margin-bottom: 2.5rem; max-width: 750px; margin-left: auto; margin-right: auto; font-weight: 400; line-height: 1.8;}
+        .partner-benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+        .partner-benefit-card { background-color: rgba(255, 255, 255, 0.95); color: var(--premier-grey-text); padding: 1.8rem; border-radius: var(--border-radius-base); text-align: left; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s ease; border: 1px solid rgba(0, 90, 156, 0.1); display: flex; flex-direction: column;} /* Flex column */
+        .partner-benefit-card:hover { transform: translateY(-5px); }
+        .partner-benefit-card i { font-size: 2rem; /* Aumenta ícone */ color: var(--premier-accent); margin-bottom: 1rem; display: block; width: 45px; height: 45px; line-height: 45px; text-align: center; background-color: var(--premier-blue-light); border-radius: 50%;}
+        .partner-benefit-card h4 { font-size: 1.1rem; color: var(--premier-blue-dark); margin-bottom: 0.5rem; font-weight: 700; }
+        .partner-benefit-card p { font-size: 0.95rem; color: var(--premier-grey-medium); margin-bottom: 0; line-height: 1.6;}
+        .cta-button { display: inline-block; background-color: var(--premier-accent); color: var(--premier-blue-dark); padding: 0.9rem 2.2rem; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 1rem; text-transform: uppercase; transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease; margin: 0.5rem 0; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; font-family: 'Poppins', sans-serif; }
+        .cta-button:hover { transform: translateY(-2px); background-color: var(--premier-accent-dark); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .cta-secondary { background-color: transparent; border: 2px solid var(--premier-accent); color: var(--premier-accent); }
+        .cta-secondary:hover { background-color: var(--premier-accent); color: var(--premier-blue-dark); }
+        #parceria-premiervet .cta-button { font-size: 1.1rem; padding: 1rem 2.5rem;}
+        #parceria-premiervet .cta-secondary { font-size: 1.1rem; padding: 1rem 2.5rem;}
+
+
+        /* Footer */
+        footer { text-align: center; margin-top: 4rem; padding: 1.5rem 1rem; background-color: var(--premier-blue-dark); color: #adb5bd; font-size: 0.85rem; opacity: 0.9; }
+
+        /* Placeholder Visual */
+        .image-placeholder { background-color: var(--premier-grey-light); border: 1px solid var(--premier-grey-border); padding: 1rem; text-align: center; color: var(--premier-grey-medium); margin: 0; border-radius: var(--border-radius-base); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; font-size: 0.9rem; width: 100%; height: 100%; font-style: normal;}
+        .image-placeholder i { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4; } /* Ícone Bootstrap no Placeholder */
+        .image-placeholder span { display: none; } /* Oculta texto */
+        .product-card-image .image-placeholder { min-height: 200px; border-radius: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+        @media (max-width: 767px) { .product-card-image .image-placeholder { border-bottom-left-radius: 0; border-top-right-radius: inherit; } }
+        @media (min-width: 768px) { .product-card-image { min-height: 260px; } }
+        .product-card-image .image-placeholder i { font-size: 2rem;}
+
+        /* Utilitários */
+        .text-center { text-align: center; }
+        .mb-0 { margin-bottom: 0 !important; }
+        .mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; } .mt-3 { margin-top: 1.5rem; } .mt-4 { margin-top: 2rem; } .mt-5 { margin-top: 3rem; }
+        .ms-1 { margin-left: 0.25rem !important; } .ms-2 { margin-left: 0.5rem !important; }
+        .me-1 { margin-right: 0.25rem !important; } .me-2 { margin-right: 0.5rem !important; }
+
+    </style>
+</head>
+<body>
+    <div id="overlay"></div>
+
+    <!-- Sidebar Off-Canvas Universal -->
+    <aside id="sidebar">
+         <button id="sidebar-close-btn">×</button>
+         <h3><i class="bi bi-compass-fill me-2" style="color: var(--premier-blue-medium);"></i>Navegação Rápida</h3>
+          <ul>
+              <li><a href="#" onclick="showPageAndScroll('page-inicio', 'page-inicio'); return false;"><i class="bi bi-house-door-fill"></i>Início</a></li>
+              <li><a href="#" onclick="showPage('page-produtos-umidos'); return false;"><i class="bi bi-box-seam-fill"></i>Produtos Úmidos</a></li>
+              <li><a href="#" onclick="showPage('page-alimento-umido'); return false;"><i class="bi bi-droplet-half"></i>Benefícios</a></li>
+              <li><a href="#" onclick="showPage('page-caso-obesidade'); return false;"><i class="bi bi-clipboard-data-fill"></i>Casos Clínicos</a></li>
+              <li><a href="#" onclick="showPage('page-inovacao'); return false;"><i class="bi bi-shield-check"></i>Antioxidantes</a></li>
+              <li><a href="#" onclick="showPage('page-recuperacao'); return false;"><i class="bi bi-heart-pulse-fill"></i>Recuperação NC</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-portal'); return false;"><i class="bi bi-laptop"></i>Portal PremierVet</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-escola'); return false;"><i class="bi bi-mortarboard-fill"></i>Escola de Nutrição</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-blog'); return false;"><i class="bi bi-journal-text"></i>BlogVet Premier</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-area-vet'); return false;"><i class="bi bi-person-badge-fill"></i>Área de Veterinários</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-guidelines'); return false;"><i class="bi bi-file-earmark-medical-fill"></i>Guidelines ABHV</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-premio'); return false;"><i class="bi bi-award-fill"></i>Prêmio Pesquisa</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-reportagem'); return false;"><i class="bi bi-building-fill"></i>Reportagem USP</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-contato'); return false;"><i class="bi bi-headset"></i>Fale Conosco</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-recursos', 'resumo-totalvet'); return false;"><i class="bi bi-cart-check-fill"></i>Pedidos Total Vet</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-conclusao', 'parceria-premiervet'); return false;"><i class="bi bi-star-fill"></i>Benefícios Parceiro</a></li>
+              <li><a href="#" onclick="showPageAndScroll('page-conclusao', 'referencias'); return false;"><i class="bi bi-book-fill"></i>Referências</a></li>
+          </ul>
+          <div class="image-placeholder mt-4">
+              <i class="bi bi-box-fill"></i>
+              <!-- Placeholder na sidebar -->
+          </div>
+    </aside>
+
+    <div id="universal-header">
+        <button id="sidebar-open-btn">☰</button>
+        <h1 id="header-title">Nutri Insights Vet</h1>
+        <div style="width: 45px;"></div>
+    </div>
+
+    <nav id="main-nav">
+          <a href="#" onclick="showPage('page-inicio'); return false;" data-page="page-inicio" class="active">Início</a>
+          <a href="#" onclick="showPage('page-produtos-umidos'); return false;" data-page="page-produtos-umidos">Produtos</a>
+          <a href="#" onclick="showPage('page-alimento-umido'); return false;" data-page="page-alimento-umido">Benefícios</a>
+          <a href="#" onclick="showPage('page-caso-obesidade'); return false;" data-page="page-caso-obesidade">Casos</a>
+          <a href="#" onclick="showPage('page-inovacao'); return false;" data-page="page-inovacao">Antiox.</a>
+          <a href="#" onclick="showPage('page-recuperacao'); return false;" data-page="page-recuperacao">Recuperação</a>
+          <a href="#" onclick="showPage('page-recursos'); return false;" data-page="page-recursos">Recursos</a>
+          <a href="#" onclick="showPage('page-conclusao'); return false;" data-page="page-conclusao">Parceria</a> <!-- Conclusão virou Parceria -->
+    </nav>
+
+    <main>
+        <!-- Páginas 1 a 9 -->
+         <!-- Cole AQUI o conteúdo das divs page-inicio, page-produtos-umidos, page-alimento-umido, page-caso-obesidade, page-inovacao, page-recuperacao, page-recursos, page-conclusao da versão anterior (v10) -->
+         <!-- Lembre-se de colar o conteúdo CORRETO dentro de cada div correspondente -->
+         <!-- Exemplo: -->
+          <!-- Página 1: Início -->
+          <div id="page-inicio" class="page-content active">
+                <!-- Conteúdo da page-inicio (v10 com seção Como Pedir) -->
+                <section>
+                     <div class="image-placeholder">
+                          <i class="bi bi-lightbulb-fill" style="font-size: 2.5rem; color: var(--premier-accent);"></i>
+                     </div>
+                     <h2>Colega Veterinário, Otimize Seus Resultados Com Informação Estratégica!</h2>
+                     <p>Na nossa corrida diária em <strong>Londrina e Norte Pioneiro do Paraná</strong>, sabemos que o tempo é precioso. Por isso, compilei aqui, de colega para colega, informações práticas e atualizadas sobre <strong>nutrição clínica</strong>, focando em como as soluções úmidas e os avanços em antioxidantes podem ser aliados estratégicos no seu dia a dia.</p>
+                     <p>Com minha experiência no mercado e no suporte técnico, meu objetivo é trazer para você insights que podem realmente <strong>facilitar suas prescrições e melhorar a saúde dos seus pacientes</strong>, com destaque para as tecnologias e validações da PremierPet.</p>
+                      <div class="text-center mt-4">
+                          <a href="#" onclick="showPageAndScroll('page-conclusao', 'parceria-premiervet'); return false;" class="cta-button cta-secondary">🎁 Descubra Benefícios Exclusivos para Vets Parceiros PremierPet!</a>
+                      </div>
+                </section>
+                 <section id="como-pedir-totalvet" style="background-color: var(--premier-blue-light); border-color: var(--premier-blue-medium);">
+                     <h2><i class="bi bi-cart-check-fill me-2" style="color: var(--premier-accent);"></i>Pedidos com Vantagens (Londrina/Norte Pioneiro)</h2>
+                     <p class="text-center">Acesse produtos PremierPet com condições especiais para sua clínica ou consumo próprio de forma simples:</p>
+                     <ol style="list-style: none; padding-left: 0; counter-reset: step-counter;">
+                          <li style="counter-increment: step-counter; margin-bottom: 1rem; padding-left: 35px; position: relative;"><span style="position: absolute; left: 0; top: 0; font-weight: 700; color: var(--premier-accent); font-size: 1.2em;">1.</span><strong style="color: var(--premier-blue-dark); font-family: 'Poppins', sans-serif;"> Contate-me para Cadastro/Cupom:</strong><br> Fale comigo (<a href="https://wa.me/SEU_NUMERO_WHATSAPP?text=Olá%20Vinicius,%20gostaria%20de%20me%20cadastrar/solicitar%20meu%20cupom%20de%20vet%20na%20TotalVet." target="_blank" rel="noopener noreferrer">@viniciuscanalespecialistas via WhatsApp</a>) para validar seu cadastro como veterinário parceiro na TotalVet e receber seu <strong>cupom de desconto exclusivo</strong>.</li>
+                          <li style="counter-increment: step-counter; margin-bottom: 1rem; padding-left: 35px; position: relative;"><span style="position: absolute; left: 0; top: 0; font-weight: 700; color: var(--premier-accent); font-size: 1.2em;">2.</span><strong style="color: var(--premier-blue-dark); font-family: 'Poppins', sans-serif;"> Acesse o Portal TotalVet:</strong><br> Visite o site <a href="http://www.totalvetdistribuidora.com.br" target="_blank" rel="noopener noreferrer">www.totalvetdistribuidora.com.br</a>.</li>
+                          <li style="counter-increment: step-counter; margin-bottom: 1rem; padding-left: 35px; position: relative;"><span style="position: absolute; left: 0; top: 0; font-weight: 700; color: var(--premier-accent); font-size: 1.2em;">3.</span><strong style="color: var(--premier-blue-dark); font-family: 'Poppins', sans-serif;"> Faça seu Pedido:</strong><br> Escolha os produtos PremierPet e adicione ao carrinho.</li>
+                           <li style="counter-increment: step-counter; margin-bottom: 1rem; padding-left: 35px; position: relative;"><span style="position: absolute; left: 0; top: 0; font-weight: 700; color: var(--premier-accent); font-size: 1.2em;">4.</span><strong style="color: var(--premier-blue-dark); font-family: 'Poppins', sans-serif;"> Aplique seu Cupom:</strong><br> No carrinho, insira o código do cupom para ativar seu desconto.</li>
+                          <li style="counter-increment: step-counter; padding-left: 35px; position: relative;"><span style="position: absolute; left: 0; top: 0; font-weight: 700; color: var(--premier-accent); font-size: 1.2em;">5.</span><strong style="color: var(--premier-blue-dark); font-family: 'Poppins', sans-serif;"> Finalize e Receba:</strong><br> Complete a compra e aproveite o benefício do frete grátis* (*consulte condições).</li>
+                     </ol>
+                     <p class="text-center mt-3" style="font-size: 0.95rem;">Simples assim! Facilite o acesso à nutrição de alta qualidade para sua clínica e seus próprios animais.</p>
+                      <div class="text-center mt-4">
+                         <a href="http://www.totalvetdistribuidora.com.br" target="_blank" rel="noopener noreferrer" class="cta-button">Ir para TotalVet Distribuidora <i class="bi bi-box-arrow-up-right ms-2"></i></a>
+                     </div>
+                 </section>
+                  <section class="highlight-box">
+                      <h3>Minha Perspectiva: Experiência + Ciência = Confiança</h3>
+                       <p>Conhecendo diferentes abordagens nutricionais, posso afirmar que o investimento da <strong>PremierPet</strong> em pesquisa e qualidade é um diferencial real. É essa combinação de <strong>rigor científico e resultados clínicos</strong> que me motiva a compartilhar estas informações com vocês.</p>
+                      <p><strong>Transparência Essencial:</strong> Este material é uma <strong>compilação técnica pessoal</strong>. <strong>Não é uma comunicação oficial da PremierPet nem da TotalVet Distribuidora</strong>. Meu objetivo é facilitar nosso acesso ao conhecimento. A responsabilidade pela conduta de prescrição cabe integralmente ao Médico Veterinário assistente.</p>
+                  </section>
+                  <section>
+                       <h2>Preparado para Potencializar Suas Prescrições?</h2>
+                       <p>Navegue pelas seções. Organizei tudo para ser rápido, relevante e impactante para sua clínica.</p>
+                   </section>
+           </div>
+           <!-- PÁGINA: Produtos Úmidos -->
+           <div id="page-produtos-umidos" class="page-content">
+                 <!-- ... (Conteúdo da v10 com imagens reais) ... -->
+                   <section class="product-line-section"><h2 class="product-line-title">Soluções Nutricionais Úmidas PremierPet</h2><p class="product-line-subtitle">Ferramentas de Alta Qualidade para Cada Necessidade Clínica e de Bem-Estar</p><div class="product-category"><h3 class="product-category-title">Premier Formula Úmidos: Nutrição Super Premium Completa</h3><p class="mb-3">Ideal para oferecer uma refeição diária balanceada, deliciosa e que contribui para a hidratação, ou como um complemento especial à dieta seca.</p><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/Premier-Formula-Umido-Caes-Adultos-PP-Frango-85-g-Mockup-Fechada.png" alt="Embalagem Premier Formula Cães Adultos Porte Pequeno Frango"></div><div class="product-card-content"><h4>Premier Formula Cães Adultos PP - Frango</h4><p class="indication">Para: Cães adultos de porte pequeno.</p><span class="benefits-title">Por que Prescrever?</span><ul><li>Vitalidade Diária</li><li>Pelagem Brilhante</li><li>Ótima Digestão</li><li>Mais Hidratação</li><li>Palatabilidade Superior</li></ul><p class="notes">Super Premium completo. Sem corantes/conservantes/aromatizantes artificiais.</p></div></div><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/Premier-Formula-Umido-Caes-Adultos-PP-Carne-85-g-Mockup-Fechada.png" alt="Embalagem Premier Formula Cães Adultos Porte Pequeno Carne"></div><div class="product-card-content"><h4>Premier Formula Cães Adultos PP - Carne</h4><p class="indication">Para: Cães adultos de porte pequeno.</p><span class="benefits-title">Por que Prescrever?</span><ul><li>Vitalidade Diária</li><li>Pelagem Brilhante</li><li>Ótima Digestão</li><li>Mais Hidratação</li><li>Palatabilidade Superior</li></ul><p class="notes">Super Premium completo. Sem corantes/conservantes/aromatizantes artificiais.</p></div></div></div><div class="product-category"><h3 class="product-category-title">Para Gatos Adultos Castrados</h3><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-Formula-Umido-Gatos-Castrados-Frango-70-g-Mockup-Fechada.png" alt="Embalagem Premier Formula Gatos Castrados Frango"></div><div class="product-card-content"><h4>Premier Formula Gatos Castrados - Frango</h4><p class="indication">Para: Gatos adultos castrados (>6 meses).</p><span class="benefits-title">Por que Prescrever?</span><ul><li>Saúde Urinária Preventiva</li><li>Peso Ideal Pós-Castração</li><li>Pelagem Deslumbrante</li><li>Saúde Intestinal</li><li>Hidratação Otimizada</li></ul><p class="notes">Super Premium adaptado. Sem corantes/conservantes/aromatizantes artificiais.</p></div></div><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-Formula-Umido-Gatos-Castrados-Atum-70-g-Mockup-Fechada.png" alt="Embalagem Premier Formula Gatos Castrados Atum"></div><div class="product-card-content"><h4>Premier Formula Gatos Castrados - Atum</h4><p class="indication">Para: Gatos adultos castrados (>6 meses).</p><span class="benefits-title">Por que Prescrever?</span><ul><li>Saúde Urinária Preventiva</li><li>Peso Ideal Pós-Castração</li><li>Pelagem Deslumbrante</li><li>Saúde Intestinal</li><li>Hidratação Otimizada</li></ul><p class="notes">Super Premium adaptado. Sem corantes/conservantes/aromatizantes artificiais.</p></div></div><div class="product-card" id="gourmet-vs-formula"><div class="product-card-image formula-vs-gourmet-images"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/Premier-Formula-Umido-Caes-Adultos-PP-Frango-85-g-Mockup-Fechada.png" alt="Embalagem Premier Formula"><span>vs.</span><img src="https://premierpet.com.br/wp-content/uploads/2020/11/sache-premier-gourmet-caes-adulto-porte-pequeno-salmao-arroz.png" alt="Embalagem Premier Gourmet Salmão"></div><div class="product-card-content"><h4>Entenda a Diferença: Formula vs. Gourmet</h4><p class="indication">Fundamental para a prescrição correta!</p><ul><li><strong>Premier Formula (Chunks):</strong> <strong>Alimento completo e balanceado</strong>. Pode ser usado como dieta exclusiva.</li><li><strong>Premier Gourmet (Pedaços ao Molho):</strong> <strong>Alimento específico (incompleto)</strong>. Delicioso, mas <strong>NÃO</strong> usar como única fonte. É um petisco.</li></ul><p class="notes">Verifique sempre a classificação!</p></div></div></div></section>
+                   <section class="product-line-section"><h2 class="product-line-title">Premier Nutrição Clínica Úmidos</h2><p class="product-line-subtitle">Sua Ferramenta Terapêutica Coadjuvante de Alta Performance</p><div class="product-category"><h3 class="product-category-title">Linha Coadjuvante - Foco Terapêutico</h3><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-NC-Umidos-Obesidade-Caes-85g-Mockup-Fechada-1.png" alt="Embalagem Premier NC Obesidade Cães"></div><div class="product-card-content"><h4>Premier NC Obesidade Cães</h4><p class="indication">Coadjuvante para: Sobrepeso/obesidade, constipação, hiperlipidemia.</p><span class="benefits-title">Resultados Esperados:</span><ul><li>Emagrecimento Eficaz</li><li>Manutenção da Massa Magra</li><li>Conforto Articular</li><li>Hidratação</li></ul><p class="notes">Prescrição essencial.</p></div></div><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-NC-Umidos-Diabetes-Caes-85g-Mockup-Fechada-1.png" alt="Embalagem Premier NC Diabetes Cães"></div><div class="product-card-content"><h4>Premier NC Diabetes Cães</h4><p class="indication">Coadjuvante para: Diabetes mellitus (>14 sem).</p><span class="benefits-title">Resultados Esperados:</span><ul><li>Auxílio no Controle Glicêmico</li><li>Suporte à Massa Muscular</li><li>Ação Antioxidante</li></ul><p class="notes">Prescrição e monitoramento.</p></div></div><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-NC-Umidos-Obesidade-Gatos-70g-Mockup-Fechada.png" alt="Embalagem Premier NC Obesidade Gatos"></div><div class="product-card-content"><h4>Premier NC Obesidade Gatos</h4><p class="indication">Coadjuvante para: Sobrepeso/obesidade, constipação.</p><span class="benefits-title">Resultados Esperados:</span><ul><li>Perda de Peso Segura</li><li>Preservação Muscular</li><li>Suporte Urinário Adicional</li></ul><p class="notes">Prescrição e supervisão profissional.</p></div></div><div class="product-card"><div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-NC-Umidos-Urinario-Gatos-70g-Mockup-Fechada.png" alt="Embalagem Premier NC Urinário Gatos"></div><div class="product-card-content"><h4>Premier NC Urinário Gatos</h4><p class="indication">Coadjuvante para: Dissolução estruvita; Prevenção estruvita/oxalato.</p><span class="benefits-title">Resultados Esperados:</span><ul><li>Prevenção de Cálculos (SSR)</li><li>Dissolução de Estruvita (pH e minerais)</li><li>Máxima Diluição Urinária</li></ul><p class="notes">Uso sob prescrição. Não indicado para DRC.</p></div></div></div><div class="text-center mt-4"><a href="https://loja.totalvetdistribuidora.com.br/alimentacao/premier-umidos-saches" target="_blank" rel="noopener noreferrer" class="cta-button">Ver Úmidos na TotalVet <i class="bi bi-arrow-right-short ms-2"></i></a><p class="notes mb-0 mt-1">(Exclusivo para Veterinários de Londrina e Norte Pioneiro do Paraná)</p></div></section>
+           </div>
+           <!-- Página Benefícios Úmido -->
+           <div id="page-alimento-umido" class="page-content">
+                <!-- ... (Conteúdo da v10) ... -->
+                 <section> <h2>Desvende o Potencial do Alimento Úmido</h2> </section>
+                 <section>
+                     <div class="image-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-droplet-fill" viewBox="0 0 16 16"><path d="M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0c0 0-6 5.686-6 10a6 6 0 0 0 6 6zM6.646 4.646l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.884-.474c.851-1.573 1.856-2.771 2.083-3.105z"/></svg></div>
+                    <h3>Além da Palatabilidade: A Ciência da Hidratação e Saciedade</h3>
+                    <p>Alimentos úmidos (>70% umidade, conforme FEDIAF 2020 para úmidos >60%) são aliados poderosos. A literatura científica destaca seu papel na <strong>saúde urinária</strong> (diluição, RSS reduzida) e no <strong>controle de peso</strong> (menor densidade calórica, maior saciedade).</p>
+                </section>
+                 <section>
+                    <h3>Benefícios Clínicos Comprovados (Conforme Literatura):</h3>
+                    <div class="accordion">
+                        <button class="accordion-button">1. Saúde Urinária: Diluição é a Chave</button>
+                        <div class="accordion-content"><p>Essencial na prevenção e manejo de <strong>UROLITÍASES</strong>. Reduz a Super Saturação Relativa (RSS), fator crítico na formação de cristais e cálculos. Fundamental para dissolução de estruvita (Ref: Buckley et al., 2011; Carciofi et al., 2005; Lulich et al., 2016).</p></div>
+                        <button class="accordion-button">2. Apetite Estimulado: Aliado em Momentos Críticos</button>
+                        <div class="accordion-content"><p>Ideal para pacientes com apetite reduzido. Textura, aroma e nutrientes concentrados aumentam a atratividade.</p></div>
+                        <button class="accordion-button">3. Controle de Peso: Menos Calorias, Mais Satisfação</button>
+                        <div class="accordion-content"><p>Permite <strong>maior volume</strong> com menos calorias, promovendo <strong>SACIEDADE</strong>. O <strong>MIX-FEEDING</strong> estratégico é uma excelente opção.</p></div>
+                    </div>
+                </section>
+                 <section class="highlight-box">
+                     <h3>Prescrição Inteligente: Use a Ferramenta Certa</h3>
+                     <p>Para resultados terapêuticos, utilize alimentos úmidos <strong>completos, balanceados e específicos</strong> para a condição. Linhas como PremierPet Nutrição Clínica oferecem essa segurança.</p>
+                     <p>Lembre-se da diferença: Alimentos completos (como Formula Chunks) vs. Alimentos específicos/incompletos (como Gourmet Pedaços ao Molho) que não devem ser a única fonte nutricional.</p>
+                 </section>
+           </div>
+           <!-- Página Casos Clínicos -->
+           <div id="page-caso-obesidade" class="page-content"> <!-- Mantido ID -->
+                <!-- ... (Conteúdo da v10) ... -->
+                  <section> <h2>Resultados que Falam por Si: Casos Clínicos Relatados</h2> </section>
+                  <section>
+                      <h3>Caso 1: Obesidade Canina e Mix-Feeding (Relato PremierPet)</h3>
+                       <div class="image-placeholder"><i class="bi bi-aspect-ratio" style="font-size: 2.5rem; color: var(--premier-grey-medium);"></i></div>
+                       <p>Relato (baseado no Informativo Técnico PremierVet Ed. X/2025) de um Labrador de 10a, ECC 7/9, hipercolesterolemia. Abordagem com linha <strong>Premier NC Obesidade</strong> em <strong>MIX-FEEDING</strong> (50/50 kcal), com cálculo calórico e acompanhamento (Ref. Laflamme, 1997; 2018; Xenoulis et al., 2013; 2020).</p>
+                       <h4>Resultados (21 sem):</h4> ECC 6/9, Peso -5kg (0.72%/sem), Colesterol Normalizado.
+                       <div class="table-container">
+                          <table><caption>Evolução (Dados do Relato Técnico PremierVet Ed. X/2025)</caption><thead><tr><th>At.</th><th>Peso</th><th>TPPS%*</th><th>ECC</th></tr></thead><tbody><tr><td>1</td><td>35.0</td><td>-</td><td>7</td></tr><tr><td>3</td><td>34.0</td><td>1.3</td><td>7</td></tr><tr><td>6</td><td>32.6</td><td>1.0</td><td>7</td></tr><tr><td>8</td><td>30.6</td><td>1.2</td><td>6</td></tr><tr><td>10</td><td>30.0</td><td>0.4</td><td>6</td></tr></tbody><tfoot><tr><td colspan="4">*Taxa Perda Peso Semanal</td></tr></tfoot></table>
+                       </div>
+                       <p><strong>Conclusão do Relato:</strong> Estratégia eficaz e segura.</p>
+                  </section>
+                  <section>
+                       <h3>Caso 2: Urolitíase Felina e Dieta Úmida Exclusiva (Relato PremierPet)</h3>
+                       <div class="image-placeholder"><i class="bi bi-graph-up-arrow" style="font-size: 2.5rem; color: var(--premier-grey-medium);"></i></div>
+                       <p>Relato (baseado no Informativo Técnico PremierVet Ed. X/2025) de gata SRD, 2a, ECC 3/9, sinais urinários, urólito (0.32cm). Abordagem com dieta <strong>EXCLUSIVA</strong>: <strong>Alimento Úmido Premier NC Gatos Urinário</strong>.</p>
+                       <h4>Resultados:</h4> <strong>21d:</strong> Urina Sub-saturada, SEM URÓLITOS no US. <strong>126d:</strong> ECC 5/9, US Normal.
+                       <p><strong>Conclusão do Relato:</strong> Dissolução completa e recuperação do ECC.</p>
+                       <p><em>(Nota: Estudo citado demonstrou que alta umidade aumenta vol. urinário e diminui densidade/SSR para estruvita vs. seco/mix-feeding - p<0.05)</em></p>
+                  </section>
+                   <section class="highlight-box">
+                      <h3>O Impacto da Escolha Certa</h3>
+                      <p>Estes relatos, baseados no material técnico da PremierVet, ilustram como a nutrição específica pode ser decisiva para o sucesso terapêutico.</p>
+                   </section>
+           </div>
+           <!-- Página Antioxidantes -->
+           <div id="page-inovacao" class="page-content">
+                  <!-- ... (Conteúdo da v10) ... -->
+                     <section> <h2>Além do Rótulo "Natural": Entendendo os Antioxidantes</h2> </section>
+                      <section>
+                        <div class="image-placeholder"><i class="bi bi-shield-check" style="font-size: 2.5rem; color: var(--premier-accent);"></i></div>
+                       <h3>A Ciência por Trás da Conservação dos Alimentos</h3>
+                       <p>A demanda por "natural" é válida, mas a prioridade é <strong>segurança e eficácia</strong>. Antioxidantes (sintéticos ou naturais) protegem contra o ranço oxidativo.</p>
+                   </section>
+                    <section>
+                       <h3>BHA/BHT vs. Naturais: Análise Técnica</h3>
+                        <div class="accordion">
+                           <button class="accordion-button">Mitos sobre BHA/BHT</button>
+                           <div class="accordion-content"><p><strong>Análise da Literatura:</strong> A ciência atual <strong>não suporta</strong> alegações de risco de câncer ou bioacumulação em cães/gatos nas doses seguras utilizadas.</p></div>
+                           <button class="accordion-button">Antioxidantes Naturais: Validação é Chave</button>
+                           <div class="accordion-content"><p>Naturais exigem dosagens e combinações específicas. Sua eficácia por todo o shelf-life precisa ser <strong>rigorosamente validada</strong> por pesquisa.</p></div>
+                           <button class="accordion-button">O Processo de Validação (Ex: PremierPet)</button>
+                           <div class="accordion-content"><p>Empresas comprometidas, como relatado pela PremierPet, realizam um longo processo (5 anos no caso deles) para validar alternativas naturais, assegurando <strong>segurança e eficácia equivalentes</strong>.</p></div>
+                        </div>
+                    </section>
+                     <section class="highlight-box">
+                         <h3>Nosso Papel: Informação e Segurança</h3>
+                         <p>Entender a ciência nos permite orientar tutores corretamente e escolher produtos com base em <strong>validação e segurança</strong>.</p>
+                     </section>
+           </div>
+           <!-- PÁGINA: Recuperação -->
+           <div id="page-recuperacao" class="page-content">
+                   <!-- ... (Conteúdo da v10 com imagens reais) ... -->
+                    <section>
+                       <div class="image-placeholder"><i class="bi bi-heart-pulse-fill" style="font-size: 2.5rem; color: var(--premier-accent);"></i></div>
+                       <h2>Suporte Nutricional Essencial: Premier NC Recuperação</h2>
+                       <p>Em momentos críticos, como pós-operatórios, traumas ou doenças debilitantes, a nutrição adequada é fundamental para a recuperação. Pacientes nessas condições frequentemente apresentam anorexia ou dificuldade de ingestão, exigindo um suporte calórico e proteico concentrado e de fácil administração.</p>
+                    </section>
+                    <section>
+                       <h3>Diferenciais Clínicos Chave:</h3>
+                       <div class="recovery-benefits">
+                           <div class="recovery-benefit-item"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/alta_energia_150.png" alt="Ícone Alta Energia e Proteína"><h4>Alta Energia e Proteína</h4><p>Energia e proteína concentradas, atende às necessidades com menor quantidade de alimento.</p></div>
+                           <div class="recovery-benefit-item"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/rico_em_eletrolitos_150.png" alt="Ícone Rico em Eletrólitos e Vitaminas"><h4>Rico Em Eletrólitos e Vitaminas</h4><p>Contribui para o equilíbrio de fluidos e recuperação de vitaminas e minerais.</p></div>
+                           <div class="recovery-benefit-item"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/consistencia_de_mousse_150.png" alt="Ícone Consistência de Mousse"><h4>Consistência de Mousse</h4><p>Facilita a ingestão espontânea e possibilita a fluidez do alimento através de sondas.</p></div>
+                       </div>
+                    </section>
+                    <section class="nutritional-highlights">
+                        <h4>Níveis de Garantia Selecionados:</h4>
+                         <ul><li><strong>Energia Metabolizável:</strong> <strong>1.300</strong> kcal/kg (<strong>110</strong> kcal/sachê 85g)</li><li><strong>Proteína Bruta (mín.):</strong> <strong>110</strong> g/kg (11%)</li><li><strong>Extrato Etéreo (mín.):</strong> <strong>90</strong> g/kg (9%)</li></ul>
+                    </section>
+                     <p class="source-attribution">"Este conteúdo foi retirado do material técnico da <strong>PremierPet.</strong> Para detalhes completos, consulte a página do produto: <a href="https://premierpet.com.br/produto/premier-nutricao-clinica-umidos-caes-e-gatos-recuperacao/" target="_blank" rel="noopener noreferrer">Premier NC Recuperação</a>"</p>
+                    <section class="product-line-section">
+                         <div class="product-category">
+                            <h3 class="product-category-title">Premier NC Recuperação Cães e Gatos</h3>
+                             <div class="product-card">
+                                  <div class="product-card-image"><img src="https://premierpet.com.br/wp-content/uploads/2025/04/PremieR-NC-Umidos-Recuperacao-Caes-e-Gatos-85g-Mockup-Fechada.png" alt="Embalagem Premier NC Recuperação"></div>
+                                  <div class="product-card-content">
+                                      <h4>Premier NC Recuperação Cães e Gatos</h4>
+                                      <p class="indication">Coadjuvante para: Cães e gatos adultos/filhotes necessitando aporte energético e proteico elevado.</p>
+                                      <span class="benefits-title">Aplicação Clínica:</span>
+                                      <ul><li>Recuperação pós-cirúrgica.</li><li>Doenças debilitantes.</li><li>Anorexia ou hiporexia prolongada.</li><li>Necessidade de alimentação via sonda.</li><li>Suporte nutricional intensivo.</li></ul>
+                                       <p class="notes">Contraindicado em pancreatite, hiperlipidemia, encefalopatia hepática, doença renal. Usar sob prescrição e supervisão.</p>
+                                  </div>
+                             </div>
+                         </div>
+                           <div class="text-center mt-4">
+                                <a href="http://www.totalvetdistribuidora.com.br" target="_blank" rel="noopener noreferrer" class="cta-button">Enviar Pedido Agora (TotalVet)</a>
+                                <p class="notes mb-0 mt-1">(Exclusivo para Veterinários de Londrina e Norte Pioneiro do Paraná)</p>
+                           </div>
+                    </section>
+            </div>
+
+           <!-- PÁGINA RECURSOS (Com subseções) -->
+           <div id="page-recursos" class="page-content">
+                 <!-- ... (Conteúdo da v10) ... -->
+                  <section><h2>Recursos & Links Estratégicos</h2></section>
+                  <section id="resumo-portal" class="subsection"><h3><i class="bi bi-laptop me-2"></i>Portal PremierVet</h3><p>A plataforma completa para o Médico Veterinário. Informações técnicas, artigos, vídeos, ferramentas de cálculo e mais.</p><div class="subsection-action"> <a href="https://premiervet.com.br/?utm_source=social&utm_medium=insta&utm_campaign=premiervet_linktree_insta&utm_id=premiervet" target="_blank" rel="noopener noreferrer" class="cta-button">Acessar Portal</a> </div></section>
+                  <section id="resumo-escola" class="subsection"><h3><i class="bi bi-mortarboard-fill me-2"></i>Escola de Nutrição Premier Pet</h3><p>Aprofunde seus conhecimentos com cursos, webinars e materiais educativos exclusivos.</p> <div class="subsection-action"> <a href="https://www.escoladenutricao.premierpet.com.br/" target="_blank" rel="noopener noreferrer" class="cta-button">Visitar Escola</a> </div></section>
+                  <section id="resumo-blog" class="subsection"><h3><i class="bi bi-journal-text me-2"></i>BlogVet Premier</h3><p>Mantenha-se atualizado com artigos relevantes, notícias e discussões sobre nutrição e saúde pet.</p> <div class="subsection-action"> <a href="https://premiervet.com.br/blogvet" target="_blank" rel="noopener noreferrer" class="cta-button">Acessar BlogVet</a> </div></section>
+                  <section id="resumo-area-vet" class="subsection"><h3><i class="bi bi-person-badge-fill me-2"></i>Área de Veterinários PremierPet</h3><p>Encontre informações complementares, materiais para download e outros recursos úteis para profissionais.</p> <div class="subsection-action"> <a href="https://premierpet.com.br/veterinarios/" target="_blank" rel="noopener noreferrer" class="cta-button">Explorar Área Vet</a> </div></section>
+                  <section id="resumo-guidelines" class="subsection"><h3><i class="bi bi-file-earmark-medical-fill me-2"></i>Guidelines ABHV</h3><p>Acesse as importantes diretrizes clínicas publicadas pela Academia Brasileira de Hospitais Veterinários.</p><div class="subsection-action"> <a href="https://www.abhv.com.br/guidelines/?utm_source=instagram&utm_medium=guideline&utm_campaign=premier_abhv" target="_blank" rel="noopener noreferrer" class="cta-button">Consultar Guidelines</a> </div></section>
+                  <section id="resumo-premio" class="subsection"><h3><i class="bi bi-award-fill me-2"></i>Prêmio Premier Pet de Pesquisa</h3><p>Conheça a iniciativa que fomenta a pesquisa científica na medicina veterinária brasileira.</p> <div class="subsection-action"> <a href="https://premierpet.com.br/11premio" target="_blank" rel="noopener noreferrer" class="cta-button">Saber Mais</a> </div></section>
+                  <section id="resumo-reportagem" class="subsection"><h3><i class="bi bi-building-fill me-2"></i>Reportagem: Centro Multicuidados USP</h3><p>Leia sobre a inauguração do primeiro Centro Multicuidados para pets da América Latina na USP.</p><div class="subsection-action"> <a href="https://veja.abril.com.br/saude/primeiro-centro-multicuidados-para-pets-da-america-latina-e-inaugurado-na-usp" target="_blank" rel="noopener noreferrer" class="cta-button">Ler Reportagem</a> </div></section>
+                  <section id="resumo-contato" class="subsection"><h3><i class="bi bi-headset me-2"></i>Fale Conosco PremierPet</h3><p>Canal oficial para entrar em contato diretamente com a fabricante.</p><div class="subsection-action"> <a href="https://premierpet.com.br/fale-conosco/" target="_blank" rel="noopener noreferrer" class="cta-button">Acessar Fale Conosco</a> </div></section>
+                  <section id="resumo-totalvet" class="subsection"><h3><i class="bi bi-cart-check-fill me-2"></i>Pedidos Total Vet (Londrina/N. Pioneiro)</h3><p>Canal direto para realizar seus pedidos através da TotalVet Distribuidora na nossa região.</p><div class="subsection-action"> <a href="http://www.totalvetdistribuidora.com.br" target="_blank" rel="noopener noreferrer" class="cta-button">Acessar Portal Total Vet</a> </div></section>
+            </div>
+
+           <!-- Página Conclusão -->
+           <div id="page-conclusao" class="page-content">
+                 <!-- ... (Conteúdo da v10 com seção parceria redesenhada) ... -->
+                   <section> <h2>Conclusão: A Nutrição como Sua Aliada Estratégica</h2> </section>
+                   <section id="parceria-premiervet" class="subsection">
+                       <h2>ELEVE SEU ATENDIMENTO: SEJA UM PARCEIRO PREMIERVET!</h2>
+                       <p>Descubra um universo de vantagens exclusivas pensadas para <strong>impulsionar sua clínica e facilitar sua rotina</strong>:</p>
+                       <div class="partner-benefits-grid">
+                            <div class="partner-benefit-card"><i class="bi bi-tags-fill"></i><h4>Descontos Exclusivos</h4><p>Condições especiais para sua clínica e para você experimentar com seus pets.</p></div>
+                            <div class="partner-benefit-card"><i class="bi bi-truck"></i><h4>Frete Grátis*</h4><p>Receba os produtos com comodidade (*consulte condições).</p></div>
+                            <div class="partner-benefit-card"><i class="bi bi-book-half"></i><h4>Materiais Técnicos</h4><p>Acesso a conteúdos científicos e materiais de apoio de alta qualidade.</p></div>
+                            <div class="partner-benefit-card"><i class="bi bi-people-fill"></i><h4>Suporte Científico</h4><p>Especialistas à disposição para dúvidas e discussão de casos.</p></div>
+                            <div class="partner-benefit-card"><i class="bi bi-clipboard2-pulse-fill"></i><h4>Ferramentas de Prescrição</h4><p>Calculadoras e guias que agilizam suas recomendações nutricionais.</p></div>
+                            <div class="partner-benefit-card"><i class="bi bi-gift-fill"></i><h4>Novidades Antecipadas</h4><p>Acesso prioritário a lançamentos e inovações.</p></div>
+                       </div>
+                       <p class="mt-4"><strong>Não fique de fora!</strong> Diferencie seu atendimento e ofereça o melhor.</p>
+                       <a href="https://premierpet.com.br/veterinarios/" target="_blank" rel="noopener noreferrer" class="cta-button">Quero Conhecer o Programa!</a>
+                       <a href="https://wa.me/SEU_NUMERO_WHATSAPP?text=Olá%20Vinicius,%20gostaria%20de%20saber%20mais%20sobre%20os%20benefícios%20de%20ser%20parceiro%20PremierVet." target="_blank" rel="noopener noreferrer" class="cta-button cta-secondary">Fale Comigo (@viniciuscanalespecialistas)</a>
+                       <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.8;">*Consulte condições para frete grátis.</p>
+                   </section>
+                   <section class="highlight-box subsection"><h3>O Impacto Direto na Sua Prática:</h3><ul><li>Prescrições mais assertivas = Melhores resultados.</li><li>Maior confiança e satisfação do tutor.</li><li>Diferenciação profissional pelo conhecimento.</li></ul></section>
+                  <section class="subsection"><h3>Vamos Continuar a Conversa!</h3><p>A nutrição está sempre evoluindo. Contar com fontes confiáveis e trocar experiências entre colegas é o caminho.</p><p><strong>Disponível em Londrina e Norte Pioneiro/PR:</strong> Contem comigo para discutir casos e novidades. Vamos fortalecer nossa comunidade!</p></section>
+                   <section id="referencias" class="subsection"><h2>REFERÊNCIAS BIBLIOGRÁFICAS CITADAS</h2><ul><li><div class="ref-content"><strong>PremierVet®.</strong> <span>INFORMATIVO TÉCNICO - Edição X/2025. Quando e como utilizar o alimento úmido nas dietas coadjuvantes: Obesidade e Urolitíase.</span></div></li><li><div class="ref-content"><strong>FEDIAF. (2020).</strong> <span>Nutritional Guidelines for Complete and Complementary Pet Food for Cats and Dogs.</span></div></li><li><div class="ref-content"><strong>Buckley, C. M. F., et al. (2011).</strong> <span>Effect of dietary water intake on urinary output... British Journal of Nutrition, 106(S1), S128–S130.</span></div></li><li><div class="ref-content"><strong>Carciofi, A. C., et al. (2005).</strong> <span>Influência do teor de água... Brazilian Journal of Veterinary Research and Animal Science, 42(6), 429.</span></div></li><li><div class="ref-content"><strong>Laflamme, D. P. (1997).</strong> <span>Development and Validation of a Body Condition Score System for Dogs. Canine Practice, 22(4), 10–15.</span></div></li><li><div class="ref-content"><strong>Laflamme, D. (2018).</strong> <span>Effect of diet on loss and preservation of lean body mass... In Purina Institute.</span></div></li><li><div class="ref-content"><strong>Lulich, J. P., et al. (2016).</strong> <span>ACVIM Small Animal Consensus Recommendations on the Treatment and Prevention of Uroliths... Journal of Veterinary Internal Medicine, 30(5), 1564–1574.</span></div></li><li><div class="ref-content"><strong>Xenoulis, P. G., et al. (2013).</strong> <span>Novel lipoprotein density profiling... BMC Veterinary Research, 9(1), 47.</span></div></li><li><div class="ref-content"><strong>Xenoulis, P. G., et al. (2020).</strong> <span>Effect of a low-fat diet on serum triglyceride and cholesterol... Journal of Veterinary Internal Medicine, 34(6), 2605–2616.</span></div></li></ul></section>
+           </div>
+
+    </main>
+
+    <footer>
+        <p>Material informativo compilado por Vinicius Rocha - Médico Veterinário | Suporte Técnico (Londrina e Norte Pioneiro do Paraná). Conteúdo reflete análises técnicas e observações pessoais, embasadas em experiência e acesso a informações técnicas, não representando comunicação oficial da PremierPet® ou TotalVet Distribuidora. A responsabilidade pela conduta de prescrição cabe integralmente ao Médico Veterinário assistente.</p>
+    </footer>
+
+     <script>
+        // --- JavaScript Essencial (Mobile Nav & Scroll - v10) ---
+         /* ... (O código JavaScript da v10 permanece funcional e adequado) ... */
+         function showPage(pageId) { const pages = document.querySelectorAll('.page-content'); pages.forEach(page => { page.classList.remove('active'); }); const activePage = document.getElementById(pageId); if (activePage) { activePage.classList.add('active'); } const navLinks = document.querySelectorAll('#main-nav a'); navLinks.forEach(link => { link.classList.remove('active'); if (link.getAttribute('data-page') === pageId) { link.classList.add('active'); } }); }
+         function showPageAndScroll(pageId, targetSectionId) { showPage(pageId); setTimeout(() => { const targetElement = document.getElementById(targetSectionId); if (targetElement) { const universalHeader = document.getElementById('universal-header'); const mainNav = document.getElementById('main-nav'); let offset = 0; if (window.getComputedStyle(universalHeader).display !== 'none') { offset += universalHeader.offsetHeight; } if (window.getComputedStyle(mainNav).position === 'fixed') { offset += mainNav.offsetHeight; } const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset; const offsetPosition = elementPosition - offset - 20; window.scrollTo({ top: offsetPosition, behavior: 'smooth' }); document.body.classList.remove('sidebar-open'); } else if (pageId === targetSectionId) { window.scrollTo({ top: 0, behavior: 'smooth' }); document.body.classList.remove('sidebar-open');} }, 150); }
+         document.addEventListener('DOMContentLoaded', function() { const accordionButtons = document.querySelectorAll('.accordion-button'); accordionButtons.forEach(button => { button.addEventListener('click', () => { button.classList.toggle('active-accordion'); const content = button.nextElementSibling; content.classList.toggle('open', button.classList.contains('active-accordion')); if (content.style.maxHeight) { content.style.maxHeight = null; } else { setTimeout(() => { content.style.maxHeight = content.scrollHeight + "px"; }, 50); } }); }); showPage('page-inicio'); const sidebar = document.getElementById('sidebar'); const openBtn = document.getElementById('sidebar-open-btn'); const closeBtn = document.getElementById('sidebar-close-btn'); const overlay = document.getElementById('overlay'); if (openBtn) { openBtn.addEventListener('click', (e) => { e.stopPropagation(); document.body.classList.add('sidebar-open'); }); } if (closeBtn) { closeBtn.addEventListener('click', () => { document.body.classList.remove('sidebar-open'); }); } if (overlay) { overlay.addEventListener('click', () => { document.body.classList.remove('sidebar-open'); }); } const sidebarInternalLinks = document.querySelectorAll('#sidebar a[href^="#"]'); sidebarInternalLinks.forEach(link => { link.addEventListener('click', function(e) { e.preventDefault(); const targetId = this.getAttribute('href').substring(1); let targetPageId; const resourceTargets = ['resumo-portal', 'resumo-escola', 'resumo-blog', 'resumo-area-vet', 'resumo-guidelines', 'resumo-premio', 'resumo-reportagem', 'resumo-contato', 'resumo-totalvet']; const conclusionTargets = ['parceria-premiervet', 'referencias']; const mainPages = ['page-inicio', 'page-produtos-umidos', 'page-alimento-umido', 'page-caso-obesidade', 'page-inovacao', 'page-recuperacao', 'page-recursos', 'page-conclusao']; if (mainPages.includes(targetId)) { targetPageId = targetId; } else if (resourceTargets.includes(targetId)) { targetPageId = 'page-recursos'; } else if (conclusionTargets.includes(targetId)) { targetPageId = 'page-conclusao'; } else { targetPageId = 'page-inicio'; } showPageAndScroll(targetPageId, targetId); }); }); function checkMobileView() { if (window.innerWidth <= 992) { document.body.classList.add('mobile-nav-active'); } else { document.body.classList.remove('mobile-nav-active'); document.body.classList.remove('sidebar-open'); } } checkMobileView(); window.addEventListener('resize', checkMobileView); });
+     </script>
+</body>
+</html>
