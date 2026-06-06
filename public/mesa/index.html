@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<title>Chamar Garçom</title>
+<link rel="stylesheet" href="/shared/style.css">
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: var(--white);
+  }
+
+  .mesa-header {
+    text-align: center;
+    padding: 2rem 1.25rem 1rem;
+  }
+
+  .mesa-emoji { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+
+  .mesa-name {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  .mesa-sub {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.65);
+    margin-top: 0.25rem;
+  }
+
+  .mesa-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 2rem 3rem;
+    gap: 1.25rem;
+  }
+
+  #btn-chamar {
+    width: 100%;
+    max-width: 340px;
+    padding: 1.3rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    box-shadow: 0 6px 30px rgba(245,166,35,0.45);
+    position: relative;
+    overflow: hidden;
+  }
+  #btn-chamar:hover:not(:disabled) {
+    background: var(--accent-dark);
+    box-shadow: 0 8px 40px rgba(245,166,35,0.6);
+  }
+  #btn-chamar.loading {
+    background: #888;
+    box-shadow: none;
+  }
+  #btn-chamar.success {
+    background: var(--success);
+    box-shadow: 0 6px 24px rgba(39,174,96,0.45);
+  }
+  #btn-chamar.error {
+    background: var(--danger);
+    box-shadow: 0 6px 24px rgba(231,76,60,0.45);
+  }
+
+  .btn-icon { font-size: 1.6rem; display: block; margin-bottom: 0.3rem; }
+
+  #btn-cardapio {
+    width: 100%;
+    max-width: 340px;
+    padding: 1rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.12);
+    color: var(--white);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    backdrop-filter: blur(6px);
+  }
+  #btn-cardapio:hover:not(:disabled) {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .feedback-box {
+    max-width: 340px;
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: opacity 0.3s;
+  }
+  .feedback-box.success { background: rgba(39,174,96,0.2); border: 1.5px solid #27ae60; color: #7dffb0; }
+  .feedback-box.error   { background: rgba(231,76,60,0.2); border: 1.5px solid #e74c3c; color: #ffaaaa; }
+  .feedback-box.info    { background: rgba(245,166,35,0.15); border: 1.5px solid var(--accent); color: var(--accent); }
+
+  .cooldown-bar {
+    width: 100%;
+    max-width: 340px;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .cooldown-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 1s linear;
+  }
+
+  /* Overlay de imagem para cardápio */
+  #cardapio-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #cardapio-overlay img {
+    max-width: 100%; max-height: 85vh;
+    border-radius: 8px;
+    object-fit: contain;
+  }
+  #cardapio-overlay button {
+    margin-top: 1rem;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    padding: 0.6rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  #erro-mesa {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    gap: 1rem;
+  }
+  #erro-mesa .icon { font-size: 4rem; }
+  #erro-mesa h2 { font-size: 1.5rem; color: #ff7070; }
+  #erro-mesa p  { color: rgba(255,255,255,0.6); max-width: 280px; }
+
+  /* Spinner simples */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block; vertical-align: middle;
+    margin-right: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Estado de erro: mesa não encontrada -->
+<section id="erro-mesa" class="hidden">
+  <span class="icon">❌</span>
+  <h2>Mesa não encontrada</h2>
+  <p>Verifique o QR code ou peça ajuda ao garçom.</p>
+</section>
+
+<!-- Conteúdo principal -->
+<section id="main-content" class="hidden">
+  <header class="mesa-header">
+    <span class="mesa-emoji">🍺</span>
+    <div class="mesa-name" id="mesa-nome">Mesa</div>
+    <div class="mesa-sub">Escaneie para ser atendido</div>
+  </header>
+
+  <main class="mesa-content">
+    <button id="btn-chamar" class="pulse" onclick="chamarGarcom()">
+      <span class="btn-icon">🔔</span>
+      Chamar Garçom
+    </button>
+
+    <div id="feedback" class="feedback-box hidden"></div>
+
+    <div id="cooldown-bar" class="cooldown-bar hidden">
+      <div id="cooldown-fill" class="cooldown-bar-fill" style="width:100%"></div>
+    </div>
+
+    <button id="btn-cardapio" onclick="verCardapio()" class="hidden">
+      📋 Ver Cardápio
+    </button>
+  </main>
+</section>
+
+<!-- Overlay cardápio imagem -->
+<div id="cardapio-overlay" class="hidden">
+  <img id="cardapio-img" src="" alt="Cardápio">
+  <button onclick="fecharCardapio()">✕ Fechar</button>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const tableId = window.location.pathname.split('/')[2];
+const COOLDOWN_SECONDS = 60;
+let socket;
+let cooldownTimer = null;
+let tableData = null;
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function setButtonState(state) {
+  const btn = document.getElementById('btn-chamar');
+  btn.className = '';
+  btn.disabled = false;
+  if (state === 'default') {
+    btn.innerHTML = '<span class="btn-icon">🔔</span>Chamar Garçom';
+    btn.classList.add('pulse');
+  } else if (state === 'loading') {
+    btn.innerHTML = '<span class="spinner"></span>Chamando...';
+    btn.classList.add('loading');
+    btn.disabled = true;
+  } else if (state === 'success') {
+    btn.innerHTML = '<span class="btn-icon">✅</span>Garçom chamado!';
+    btn.classList.add('success');
+    btn.disabled = true;
+  } else if (state === 'error') {
+    btn.innerHTML = '<span class="btn-icon">❌</span>Tente novamente';
+    btn.classList.add('error');
+  } else if (state === 'attended') {
+    btn.innerHTML = '<span class="btn-icon">👨‍🍳</span>Garçom a caminho!';
+    btn.classList.add('success');
+    btn.disabled = true;
+    setTimeout(() => setButtonState('default'), 5000);
+  }
+}
+
+function showFeedback(msg, type) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg;
+  el.className = `feedback-box ${type}`;
+  el.classList.remove('hidden');
+  if (type === 'success') {
+    setTimeout(() => el.classList.add('hidden'), 8000);
+  }
+}
+
+function startCooldown(seconds) {
+  const bar = document.getElementById('cooldown-bar');
+  const fill = document.getElementById('cooldown-fill');
+  bar.classList.remove('hidden');
+  fill.style.width = '100%';
+  let remaining = seconds;
+  cooldownTimer = setInterval(() => {
+    remaining--;
+    fill.style.width = `${(remaining / seconds) * 100}%`;
+    if (remaining <= 0) {
+      clearInterval(cooldownTimer);
+      bar.classList.add('hidden');
+      setButtonState('default');
+      document.getElementById('feedback').classList.add('hidden');
+    }
+  }, 1000);
+}
+
+function chamarGarcom() {
+  if (!socket?.connected) {
+    toast('Sem conexão. Recarregue a página.', 'error'); return;
+  }
+  setButtonState('loading');
+  socket.emit('table:call', { tableId });
+}
+
+async function verCardapio() {
+  try {
+    const res = await fetch('/api/menu');
+    const menu = await res.json();
+    if (!menu) { toast('Nenhum cardápio disponível no momento.', 'error'); return; }
+    if (menu.mimetype === 'application/pdf') {
+      window.open(menu.url, '_blank');
+    } else {
+      document.getElementById('cardapio-img').src = menu.url;
+      document.getElementById('cardapio-overlay').classList.remove('hidden');
+    }
+  } catch {
+    toast('Erro ao carregar cardápio.', 'error');
+  }
+}
+
+function fecharCardapio() {
+  document.getElementById('cardapio-overlay').classList.add('hidden');
+}
+
+async function init() {
+  if (!tableId) { showError(); return; }
+  try {
+    const res = await fetch(`/api/mesas/${tableId}`);
+    if (!res.ok) { showError(); return; }
+    tableData = await res.json();
+    document.getElementById('mesa-nome').textContent = tableData.name;
+    document.getElementById('main-content').classList.remove('hidden');
+
+    // Verifica se tem cardápio
+    const mRes = await fetch('/api/menu');
+    const menu = await mRes.json();
+    if (menu) document.getElementById('btn-cardapio').classList.remove('hidden');
+
+    connectSocket();
+  } catch {
+    showError();
+  }
+}
+
+function showError() {
+  document.getElementById('erro-mesa').classList.remove('hidden');
+}
+
+function connectSocket() {
+  socket = io({ transports: ['websocket', 'polling'] });
+
+  socket.on('connect', () => {
+    socket.emit('join:mesa', { tableId });
+  });
+
+  socket.on('call:confirmed', ({ repeated }) => {
+    if (repeated) {
+      setButtonState('success');
+      showFeedback('Garçom já foi notificado! Aguarde.', 'info');
+    } else {
+      setButtonState('success');
+      showFeedback('✅ Garçom notificado! Ele virá em breve.', 'success');
+      startCooldown(COOLDOWN_SECONDS);
+    }
+  });
+
+  socket.on('call:attended', ({ tableId: tid }) => {
+    if (tid !== tableId) return;
+    setButtonState('attended');
+    showFeedback('👨‍🍳 O garçom está a caminho!', 'success');
+    if (cooldownTimer) { clearInterval(cooldownTimer); document.getElementById('cooldown-bar').classList.add('hidden'); }
+  });
+
+  socket.on('erro', ({ message }) => {
+    setButtonState('error');
+    toast(message, 'error');
+  });
+
+  socket.on('disconnect', () => {
+    toast('Conexão perdida. Reconectando...', '');
+  });
+}
+
+init();
+</script>
+</body>
+</html>

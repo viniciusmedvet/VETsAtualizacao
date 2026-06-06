@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Chama o Garçom</title>
+<link rel="stylesheet" href="/shared/style.css">
+<style>
+  body { min-height: 100vh; background: var(--bg); }
+
+  /* ─── Login ─────────────────────────────────────────── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    padding: 2rem;
+  }
+  .login-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  .login-card .icon { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+  .login-card h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; color: var(--primary); }
+  .login-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  #login-error { color: var(--danger); font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.2em; }
+
+  /* ─── Header ────────────────────────────────────────── */
+  .admin-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .admin-header h1 { font-size: 1.15rem; font-weight: 700; }
+  .admin-header button { background: rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; padding: 0.4rem 0.9rem; border-radius: 6px; }
+  .admin-header button:hover { background: rgba(255,255,255,0.25); }
+
+  /* ─── Layout ────────────────────────────────────────── */
+  .content { max-width: 800px; margin: 0 auto; padding: 1.5rem 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+
+  /* ─── Seções ─────────────────────────────────────────── */
+  .section { }
+  .section-title {
+    font-size: 1.1rem; font-weight: 700; color: var(--primary);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  /* ─── Formulário nova mesa ───────────────────────────── */
+  .form-row { display: flex; gap: 0.75rem; }
+  .form-row input { flex: 1; }
+  .form-row button { flex-shrink: 0; white-space: nowrap; }
+
+  /* ─── Grid mesas ──────────────────────────────────────── */
+  #mesas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .mesa-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    border-top: 4px solid var(--accent);
+  }
+  .mesa-card-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .mesa-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .mesa-card-actions button {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .qr-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f4f4f8;
+    border: 1px solid var(--border);
+  }
+  .mesa-count { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+  /* ─── Menu ──────────────────────────────────────────── */
+  .menu-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow);
+    flex-wrap: wrap;
+  }
+  .menu-icon { font-size: 2rem; flex-shrink: 0; }
+  .menu-details { flex: 1; min-width: 0; }
+  .menu-name { font-weight: 700; color: var(--primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .menu-meta { font-size: 0.82rem; color: var(--text-muted); }
+  .menu-actions { display: flex; gap: 0.5rem; }
+
+  .upload-area {
+    background: #fff;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .upload-area:hover { border-color: var(--accent); background: #fffbf4; }
+  .upload-area .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+  .upload-area p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; }
+  .upload-area input[type=file] { display: none; }
+  #file-name-label { font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-top: 0.5rem; }
+
+  /* ─── Links de acesso ────────────────────────────────── */
+  .links-box {
+    background: var(--primary);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    color: #fff;
+  }
+  .links-box h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.9rem;
+  }
+  .link-item:last-child { border-bottom: none; }
+  .link-item a { color: var(--accent); word-break: break-all; }
+  .link-item button {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.7rem;
+    flex-shrink: 0;
+    border-radius: 4px;
+  }
+
+  /* ─── Confirm dialog ─────────────────────────────────── */
+  #confirm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .confirm-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .confirm-box h3 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+  .confirm-box p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .confirm-box .btns { display: flex; gap: 0.75rem; }
+  .confirm-box .btns button { flex: 1; padding: 0.75rem; font-weight: 700; }
+
+  .empty-mesas { text-align: center; color: var(--text-muted); padding: 2rem; }
+  .empty-mesas .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+</style>
+</head>
+<body>
+
+<!-- ─── Tela de Login ─────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <span class="icon">🔐</span>
+    <h1>Painel Admin</h1>
+    <p>Chama o Garçom — Gerenciamento</p>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      <input type="password" id="senha-input" placeholder="Senha" onkeydown="if(event.key==='Enter')login()">
+      <button class="btn-primary btn-full" onclick="login()">Entrar</button>
+    </div>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- ─── Painel Principal ──────────────────────────────────────── -->
+<div id="painel" class="hidden">
+  <header class="admin-header">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <span style="font-size:1.4rem">🍺</span>
+      <h1>Painel Admin</h1>
+    </div>
+    <button onclick="logout()">Sair</button>
+  </header>
+
+  <main class="content">
+
+    <!-- Links de acesso rápido -->
+    <div class="links-box">
+      <h3>🔗 Links de Acesso</h3>
+      <div class="link-item">
+        <span>👨‍🍳 Balcão:</span>
+        <a id="link-balcao" href="/balcao" target="_blank">/balcao</a>
+        <button onclick="copiarLink('link-balcao')">Copiar</button>
+      </div>
+    </div>
+
+    <!-- ─── Gerenciar Mesas ─── -->
+    <section class="section">
+      <div class="section-title">🪑 Gerenciar Mesas</div>
+
+      <div class="form-row">
+        <input type="text" id="mesa-nome-input" placeholder="Ex: Mesa 1" maxlength="30">
+        <button class="btn-accent" onclick="criarMesa()">+ Adicionar Mesa</button>
+      </div>
+      <div class="mesa-count" id="mesa-count-label">0 mesas cadastradas</div>
+
+      <div id="mesas-grid">
+        <div class="empty-mesas">
+          <span class="icon">🪑</span>
+          <p>Nenhuma mesa cadastrada ainda.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Cardápio ─── -->
+    <section class="section">
+      <div class="section-title">📋 Cardápio</div>
+
+      <div id="menu-atual" class="hidden menu-info">
+        <span class="menu-icon" id="menu-icon">📄</span>
+        <div class="menu-details">
+          <div class="menu-name" id="menu-nome"></div>
+          <div class="menu-meta" id="menu-meta"></div>
+        </div>
+        <div class="menu-actions">
+          <a id="menu-link" href="#" target="_blank">
+            <button class="btn-outline" style="font-size:0.82rem;">Visualizar</button>
+          </a>
+          <button class="btn-danger" style="font-size:0.82rem;" onclick="removerMenu()">Remover</button>
+        </div>
+      </div>
+
+      <div class="upload-area" onclick="document.getElementById('file-input').click()" id="upload-area">
+        <span class="icon">📤</span>
+        <p>Clique para enviar o cardápio<br><small>PDF ou imagem (JPG, PNG) — máx. 20MB</small></p>
+        <input type="file" id="file-input" accept=".pdf,image/*" onchange="fileSelected()">
+        <div id="file-name-label"></div>
+        <button class="btn-accent" id="btn-upload" onclick="event.stopPropagation();enviarMenu()" style="margin-top:0.75rem;display:none;">📤 Enviar Cardápio</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Confirm dialog -->
+<div id="confirm-overlay" class="hidden">
+  <div class="confirm-box">
+    <h3>Confirmar exclusão</h3>
+    <p id="confirm-msg">Deseja excluir esta mesa?</p>
+    <div class="btns">
+      <button class="btn-outline" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-danger" id="confirm-btn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+let adminToken = null;
+let pendingDelete = null;
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function authHeader() {
+  return { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
+}
+
+// ─── Auth ──────────────────────────────────────────────
+async function login() {
+  const senha = document.getElementById('senha-input').value.trim();
+  if (!senha) return;
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: senha })
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('login-error').textContent = data.error || 'Senha incorreta'; return; }
+    adminToken = data.token;
+    sessionStorage.setItem('adminToken', adminToken);
+    showPainel();
+  } catch { document.getElementById('login-error').textContent = 'Erro de conexão. Tente novamente.'; }
+}
+
+function logout() {
+  sessionStorage.removeItem('adminToken');
+  adminToken = null;
+  document.getElementById('painel').classList.add('hidden');
+  document.getElementById('login-screen').style.display = '';
+}
+
+function showPainel() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('painel').classList.remove('hidden');
+  const base = window.location.origin;
+  document.getElementById('link-balcao').textContent = `${base}/balcao`;
+  document.getElementById('link-balcao').href = `${base}/balcao`;
+  carregarMesas();
+  carregarMenu();
+}
+
+// ─── Mesas ─────────────────────────────────────────────
+async function carregarMesas() {
+  try {
+    const res = await fetch('/api/mesas');
+    const mesas = await res.json();
+    renderMesas(mesas);
+  } catch { toast('Erro ao carregar mesas.', 'error'); }
+}
+
+function renderMesas(mesas) {
+  const grid = document.getElementById('mesas-grid');
+  document.getElementById('mesa-count-label').textContent = `${mesas.length}/50 mesas cadastradas`;
+
+  if (mesas.length === 0) {
+    grid.innerHTML = '<div class="empty-mesas"><span class="icon">🪑</span><p>Nenhuma mesa cadastrada ainda.<br>Adicione a primeira mesa acima.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  mesas.forEach(mesa => {
+    const card = document.createElement('div');
+    card.className = 'mesa-card';
+    card.id = `mesa-card-${mesa.id}`;
+    card.innerHTML = `
+      <img class="qr-preview" src="${mesa.qrFile}" alt="QR ${mesa.name}">
+      <div class="mesa-card-name">🪑 ${mesa.name}</div>
+      <div class="mesa-card-actions">
+        <button class="btn-outline" onclick="imprimirQR('${mesa.id}')">🖨️ Imprimir</button>
+        <a href="${mesa.qrFile}" download="qr-${mesa.name}.png">
+          <button class="btn-outline" style="width:100%">⬇️ Baixar</button>
+        </a>
+        <button class="btn-accent" onclick="copiarLink(null,'${mesa.mesaUrl}')">🔗 Copiar Link</button>
+        <button class="btn-danger" onclick="confirmarDelete('${mesa.id}','${mesa.name.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+async function criarMesa() {
+  const input = document.getElementById('mesa-nome-input');
+  const name = input.value.trim();
+  if (!name) { toast('Digite o nome da mesa.', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/mesas', {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao criar mesa.', 'error'); return; }
+    input.value = '';
+    toast(`✅ ${data.name} criada!`, 'success');
+    carregarMesas();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+function confirmarDelete(id, name) {
+  pendingDelete = id;
+  document.getElementById('confirm-msg').textContent = `Deseja excluir "${name}"? O QR code será invalidado.`;
+  document.getElementById('confirm-overlay').classList.remove('hidden');
+  document.getElementById('confirm-btn').onclick = () => deletarMesa(id);
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+  pendingDelete = null;
+}
+
+async function deletarMesa(id) {
+  closeConfirm();
+  try {
+    const res = await fetch(`/api/mesas/${id}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao excluir mesa.', 'error'); return; }
+    toast('Mesa excluída.', '');
+    carregarMesas();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+function imprimirQR(id) {
+  window.open(`/api/qrcode/${id}/print`, '_blank');
+}
+
+// ─── Cardápio ──────────────────────────────────────────
+async function carregarMenu() {
+  try {
+    const res = await fetch('/api/menu');
+    const menu = await res.json();
+    if (menu) mostrarMenuAtual(menu);
+    else escondeMenuAtual();
+  } catch { }
+}
+
+function mostrarMenuAtual(menu) {
+  document.getElementById('menu-atual').classList.remove('hidden');
+  document.getElementById('upload-area').style.display = 'none';
+  const isPdf = menu.mimetype === 'application/pdf';
+  document.getElementById('menu-icon').textContent = isPdf ? '📄' : '🖼️';
+  document.getElementById('menu-nome').textContent = menu.originalName;
+  const date = new Date(menu.uploadedAt).toLocaleDateString('pt-BR');
+  document.getElementById('menu-meta').textContent = `Enviado em ${date} • ${isPdf ? 'PDF' : 'Imagem'}`;
+  document.getElementById('menu-link').href = menu.url;
+}
+
+function escondeMenuAtual() {
+  document.getElementById('menu-atual').classList.add('hidden');
+  document.getElementById('upload-area').style.display = '';
+}
+
+function fileSelected() {
+  const file = document.getElementById('file-input').files[0];
+  if (!file) return;
+  document.getElementById('file-name-label').textContent = `📎 ${file.name}`;
+  document.getElementById('btn-upload').style.display = 'inline-block';
+}
+
+async function enviarMenu() {
+  const file = document.getElementById('file-input').files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('cardapio', file);
+  const btn = document.getElementById('btn-upload');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const res = await fetch('/api/menu', {
+      method: 'POST',
+      headers: { 'x-admin-token': adminToken },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao enviar.', 'error'); }
+    else { toast('✅ Cardápio enviado!', 'success'); mostrarMenuAtual(data); }
+  } catch { toast('Erro ao enviar cardápio.', 'error'); }
+  finally { btn.disabled = false; btn.textContent = '📤 Enviar Cardápio'; }
+}
+
+async function removerMenu() {
+  if (!confirm('Remover o cardápio atual?')) return;
+  try {
+    const res = await fetch('/api/menu', { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
+    toast('Cardápio removido.', '');
+    escondeMenuAtual();
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-name-label').textContent = '';
+    document.getElementById('btn-upload').style.display = 'none';
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+// ─── Utilitários ───────────────────────────────────────
+function copiarLink(elId, url) {
+  const text = url || document.getElementById(elId)?.href;
+  navigator.clipboard.writeText(text).then(() => toast('Link copiado!', 'success')).catch(() => toast('Não foi possível copiar.', 'error'));
+}
+
+// ─── Auto-login ─────────────────────────────────────────
+window.onload = () => {
+  const saved = sessionStorage.getItem('adminToken');
+  if (saved) { adminToken = saved; showPainel(); }
+  document.getElementById('senha-input').focus();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<title>Balcão — Chamadas</title>
+<link rel="stylesheet" href="/shared/style.css">
+<style>
+  body { min-height: 100vh; background: var(--bg); }
+
+  .balcao-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .header-left { display: flex; align-items: center; gap: 0.75rem; }
+  .header-left h1 { font-size: 1.15rem; font-weight: 700; }
+  .header-right { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: rgba(255,255,255,0.75); }
+
+  .badge-count {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    min-width: 26px;
+    text-align: center;
+  }
+
+  .content { padding: 1.25rem; max-width: 700px; margin: 0 auto; }
+
+  /* Estado vazio */
+  .empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    color: var(--text-muted);
+  }
+  .empty-state .icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
+  .empty-state h2 { font-size: 1.3rem; color: #555; margin-bottom: 0.5rem; }
+
+  /* Cards de chamada */
+  #calls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .call-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border-left: 5px solid var(--accent);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    animation: slideIn 0.35s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .call-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(245,166,35,0.06), transparent);
+    pointer-events: none;
+  }
+  .call-card.attended {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+    transition: all 0.4s ease;
+    pointer-events: none;
+  }
+
+  .call-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .call-bell {
+    font-size: 2rem;
+    animation: bellRing 1s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes bellRing {
+    0%, 100% { transform: rotate(0deg); }
+    20%       { transform: rotate(-15deg); }
+    40%       { transform: rotate(15deg); }
+    60%       { transform: rotate(-10deg); }
+    80%       { transform: rotate(10deg); }
+  }
+  .call-info { flex: 1; min-width: 0; }
+  .call-table-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+  .call-time {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  .btn-atender {
+    background: var(--success);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .btn-atender:hover:not(:disabled) { background: #219a52; }
+
+  /* Overlay de ativação de som */
+  #sound-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,26,46,0.95);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+    padding: 2rem;
+    gap: 1.5rem;
+  }
+  #sound-overlay .icon { font-size: 4rem; }
+  #sound-overlay h2 { font-size: 1.5rem; font-weight: 700; }
+  #sound-overlay p { color: rgba(255,255,255,0.7); max-width: 300px; }
+  #sound-overlay button {
+    background: var(--accent);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 1rem 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(245,166,35,0.4);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(245,166,35,0.7); }
+    70%  { box-shadow: 0 0 0 14px rgba(245,166,35,0); }
+    100% { box-shadow: 0 0 0 0 rgba(245,166,35,0); }
+  }
+  .call-card { animation: slideIn 0.35s ease, pulse-ring 2s infinite; }
+</style>
+</head>
+<body>
+
+<!-- Overlay: ativar som -->
+<div id="sound-overlay">
+  <span class="icon">🔔</span>
+  <h2>Painel do Garçom</h2>
+  <p>Toque no botão abaixo para ativar as notificações sonoras quando uma mesa chamar.</p>
+  <button onclick="ativarSom()">✅ Ativar e Começar</button>
+</div>
+
+<!-- Header -->
+<header class="balcao-header">
+  <div class="header-left">
+    <span style="font-size:1.5rem">🍺</span>
+    <h1>Chamadas de Mesa</h1>
+    <span id="badge-count" class="badge-count hidden">0</span>
+  </div>
+  <div class="header-right">
+    <span id="status-dot" class="status-dot offline"></span>
+    <span id="status-label">Conectando...</span>
+  </div>
+</header>
+
+<!-- Conteúdo -->
+<main class="content">
+  <div id="empty-state" class="empty-state">
+    <span class="icon">✅</span>
+    <h2>Tudo tranquilo!</h2>
+    <p>Nenhuma mesa chamando no momento.</p>
+  </div>
+
+  <div id="calls-grid"></div>
+</main>
+
+<div id="toast-container"></div>
+
+<!-- Áudio de notificação (gerado por Web Audio API) -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let audioCtx = null;
+let activeCalls = [];
+let socket;
+let timeUpdater;
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function ativarSom() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Toca um beep silencioso para desbloquear o contexto de áudio
+  playBeep(0.001);
+  document.getElementById('sound-overlay').style.display = 'none';
+  connectSocket();
+}
+
+function playBeep(volume = 0.4) {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.5);
+
+    // Toca dois beeps
+    setTimeout(() => {
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gain2.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc2.start(audioCtx.currentTime);
+      osc2.stop(audioCtx.currentTime + 0.4);
+    }, 400);
+  } catch(e) { console.warn('Áudio:', e); }
+}
+
+function timeAgo(timestamp) {
+  const diff = Math.floor((Date.now() - timestamp) / 1000);
+  if (diff < 60) return `há ${diff}s`;
+  const mins = Math.floor(diff / 60);
+  return `há ${mins} min`;
+}
+
+function updateBadge() {
+  const badge = document.getElementById('badge-count');
+  if (activeCalls.length > 0) {
+    badge.textContent = activeCalls.length;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+function renderCalls() {
+  const grid = document.getElementById('calls-grid');
+  const empty = document.getElementById('empty-state');
+
+  if (activeCalls.length === 0) {
+    empty.style.display = '';
+    grid.innerHTML = '';
+    updateBadge();
+    return;
+  }
+  empty.style.display = 'none';
+  updateBadge();
+
+  // Atualiza apenas os tempos e adiciona novos cards
+  activeCalls.forEach(call => {
+    let card = document.getElementById(`card-${call.callId}`);
+    if (card) {
+      card.querySelector('.call-time').textContent = `Chamou ${timeAgo(call.timestamp)}`;
+      return;
+    }
+    card = document.createElement('div');
+    card.className = 'call-card';
+    card.id = `card-${call.callId}`;
+    card.innerHTML = `
+      <div class="call-card-header">
+        <span class="call-bell">🔔</span>
+        <div class="call-info">
+          <div class="call-table-name">${call.tableName}</div>
+          <div class="call-time">Chamou ${timeAgo(call.timestamp)}</div>
+        </div>
+      </div>
+      <button class="btn-atender" onclick="atender('${call.tableId}', '${call.callId}', this)">
+        ✅ Marcar como Atendido
+      </button>
+    `;
+    grid.prepend(card);
+  });
+
+  // Remove cards que não existem mais
+  Array.from(grid.children).forEach(card => {
+    const callId = card.id.replace('card-', '');
+    if (!activeCalls.find(c => c.callId === callId)) {
+      card.remove();
+    }
+  });
+}
+
+function atender(tableId, callId, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Atendendo...';
+  socket.emit('call:attend', { tableId });
+}
+
+function onCallAttended(tableId, callId) {
+  const card = document.getElementById(`card-${callId}`);
+  if (card) {
+    card.classList.add('attended');
+    setTimeout(() => card.remove(), 450);
+  }
+  activeCalls = activeCalls.filter(c => c.callId !== callId);
+  setTimeout(renderCalls, 450);
+}
+
+function connectSocket() {
+  socket = io({ transports: ['websocket', 'polling'] });
+
+  socket.on('connect', () => {
+    document.getElementById('status-dot').className = 'status-dot online';
+    document.getElementById('status-label').textContent = 'Conectado';
+    socket.emit('join:balcao');
+  });
+
+  socket.on('disconnect', () => {
+    document.getElementById('status-dot').className = 'status-dot offline';
+    document.getElementById('status-label').textContent = 'Desconectado';
+    toast('Conexão perdida. Tentando reconectar...', 'error');
+  });
+
+  socket.on('init:balcao', ({ pendingCalls }) => {
+    activeCalls = pendingCalls;
+    renderCalls();
+  });
+
+  socket.on('table:calling', (call) => {
+    if (!activeCalls.find(c => c.callId === call.callId)) {
+      activeCalls.push(call);
+    }
+    playBeep();
+    renderCalls();
+    toast(`🔔 ${call.tableName} está chamando!`, '');
+
+    // Vibração se disponível
+    if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]);
+  });
+
+  socket.on('call:attended', ({ tableId, callId }) => {
+    onCallAttended(tableId, callId);
+  });
+}
+
+// Atualiza os tempos relativos a cada 30 segundos
+timeUpdater = setInterval(() => {
+  document.querySelectorAll('.call-time').forEach((el, i) => {
+    if (activeCalls[i]) {
+      el.textContent = `Chamou ${timeAgo(activeCalls[i].timestamp)}`;
+    }
+  });
+}, 30000);
+</script>
+</body>
+</html>
