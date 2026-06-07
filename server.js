@@ -197,6 +197,70 @@ app.get('/api/qrcode/:tableId/print', (req, res) => {
 </html>`);
 });
 
+app.get('/api/qrcode/all/print', (req, res) => {
+  const db = readDB();
+  if (db.tables.length === 0) return res.status(404).send('Nenhuma mesa cadastrada.');
+
+  const s = db.settings || {};
+  const barName = s.barName || 'Meu Bar';
+  const tagline = s.tagline || 'Escaneie para chamar o garçom';
+  const accent = s.accentColor || '#f5a623';
+  const logoHtml = s.logo?.url
+    ? `<img src="${s.logo.url}" alt="Logo" style="max-height:60px;max-width:160px;object-fit:contain;">`
+    : `<span style="font-size:2rem">🍺</span>`;
+
+  const cards = db.tables.map(t => `
+    <div class="qr-card">
+      ${logoHtml}
+      <div class="bar-name">${barName}</div>
+      <div class="table-name" style="color:${accent}">${t.name}</div>
+      <img src="/qrcodes/${t.id}.png" alt="QR ${t.name}">
+      <div class="caption">${tagline}</div>
+    </div>`).join('');
+
+  res.send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>QR Codes — ${barName}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 1rem; }
+  h2 { text-align: center; margin-bottom: 1rem; color: #1a1a2e; font-size: 1.2rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, 220px); gap: 1rem; justify-content: center; }
+  .qr-card {
+    background: #fff; border: 2px solid #1a1a2e; border-radius: 12px;
+    padding: 1rem 0.75rem; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .bar-name { font-size: 0.9rem; font-weight: 700; color: #1a1a2e; }
+  .table-name { font-size: 1.5rem; font-weight: 800; }
+  .qr-card img { width: 170px; height: 170px; margin: 0.25rem 0; }
+  .caption { font-size: 0.72rem; color: #666; }
+  .print-btn { display: block; margin: 1rem auto; padding: 0.6rem 2rem; font-size: 1rem; cursor: pointer; background: ${accent}; color: #fff; border: none; border-radius: 8px; }
+  @media print { body { background: #fff; padding: 0; } h2, .print-btn { display: none; } .grid { gap: 0.5rem; } }
+</style>
+</head>
+<body>
+<h2>QR Codes — ${barName} (${db.tables.length} mesa${db.tables.length > 1 ? 's' : ''})</h2>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimir Todos</button>
+<div class="grid">${cards}</div>
+<script>window.onload = () => window.print();</script>
+</body>
+</html>`);
+});
+
+// ─── API: Histórico de Chamadas ───────────────────────────────────────────────
+
+app.get('/api/historico', adminAuth, (req, res) => {
+  const db = readDB();
+  const today = new Date().toISOString().slice(0, 10);
+  const todayLog = (db.callHistory || []).filter(h => h.date === today);
+  const total = (db.callHistory || []).length;
+  res.json({ today: todayLog.length, total, recent: todayLog.slice(-20).reverse() });
+});
+
 // ─── API: Cardápio ────────────────────────────────────────────────────────────
 
 app.get('/api/menu', (req, res) => {
@@ -251,12 +315,13 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.post('/api/settings', adminAuth, (req, res) => {
-  const { barName, tagline, welcomeMessage } = req.body;
+  const { barName, tagline, welcomeMessage, accentColor } = req.body;
   const db = readDB();
   if (!db.settings) db.settings = {};
   if (barName !== undefined) db.settings.barName = barName.trim().slice(0, 80);
   if (tagline !== undefined) db.settings.tagline = tagline.trim().slice(0, 120);
   if (welcomeMessage !== undefined) db.settings.welcomeMessage = welcomeMessage.trim().slice(0, 240);
+  if (accentColor !== undefined && /^#[0-9a-fA-F]{6}$/.test(accentColor)) db.settings.accentColor = accentColor;
   writeDB(db);
   res.json(db.settings);
 });
@@ -313,7 +378,9 @@ io.on('connection', (socket) => {
   socket.on('join:balcao', () => {
     socket.join('balcao');
     const db = readDB();
-    socket.emit('init:balcao', { pendingCalls: db.activeCalls });
+    const today = new Date().toISOString().slice(0, 10);
+    const todayCount = (db.callHistory || []).filter(h => h.date === today).length;
+    socket.emit('init:balcao', { pendingCalls: db.activeCalls, todayCount });
     console.log(`[Socket] Balcão conectado: ${socket.id}`);
   });
 
@@ -353,9 +420,20 @@ io.on('connection', (socket) => {
     if (callIdx === -1) return;
 
     const [call] = db.activeCalls.splice(callIdx, 1);
+    if (!db.callHistory) db.callHistory = [];
+    db.callHistory.push({
+      tableId: call.tableId,
+      tableName: call.tableName,
+      calledAt: call.calledAt,
+      attendedAt: new Date().toISOString(),
+      date: new Date().toISOString().slice(0, 10)
+    });
+    // Mantém no máximo 500 registros para não crescer infinito
+    if (db.callHistory.length > 500) db.callHistory = db.callHistory.slice(-500);
     writeDB(db);
 
     io.emit('call:attended', { tableId, callId: call.callId });
+    io.to('balcao').emit('stats:update', { todayCount: db.callHistory.filter(h => h.date === new Date().toISOString().slice(0, 10)).length });
     console.log(`[Socket] Atendido: mesa ${call.tableName}`);
   });
 

@@ -189,6 +189,11 @@
     <span id="badge-count" class="badge-count hidden">0</span>
   </div>
   <div class="header-right">
+    <div style="text-align:right;">
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);">atendidas hoje</div>
+      <div id="today-count" style="font-size:1.1rem;font-weight:800;color:var(--accent);line-height:1;">0</div>
+    </div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);"></div>
     <span id="status-dot" class="status-dot offline"></span>
     <span id="status-label">Conectando...</span>
   </div>
@@ -351,14 +356,19 @@ function connectSocket() {
     socket.emit('join:balcao');
   });
 
+  socket.on('stats:update', ({ todayCount }) => {
+    document.getElementById('today-count').textContent = todayCount;
+  });
+
   socket.on('disconnect', () => {
     document.getElementById('status-dot').className = 'status-dot offline';
     document.getElementById('status-label').textContent = 'Desconectado';
     toast('Conexão perdida. Tentando reconectar...', 'error');
   });
 
-  socket.on('init:balcao', ({ pendingCalls }) => {
+  socket.on('init:balcao', ({ pendingCalls, todayCount }) => {
     activeCalls = pendingCalls;
+    if (todayCount !== undefined) document.getElementById('today-count').textContent = todayCount;
     renderCalls();
   });
 

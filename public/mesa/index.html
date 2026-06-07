@@ -340,8 +340,26 @@ function applySettings(s) {
     wrap.innerHTML = `<img src="${s.logo.url}" alt="Logo ${s.barName}">`;
   }
 
+  // Aplica cor de destaque personalizada
+  if (s.accentColor) {
+    const root = document.documentElement;
+    root.style.setProperty('--accent', s.accentColor);
+    // Gera versão escura da cor para hover (escurece 15%)
+    const dark = adjustColor(s.accentColor, -30);
+    root.style.setProperty('--accent-dark', dark);
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', s.accentColor);
+  }
+
   // Atualiza título da página
   if (s.barName) document.title = s.barName;
+}
+
+function adjustColor(hex, amount) {
+  const num = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+  const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+  const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
 async function init() {
