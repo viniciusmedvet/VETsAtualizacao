@@ -43,6 +43,16 @@ const upload = multer({
   }
 });
 
+const uploadImage = multer({
+  dest: UPLOADS_DIR,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter(req, file, cb) {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Use uma imagem (JPG, PNG, WEBP, GIF ou SVG).'));
+  }
+});
+
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-token'];
   if (token === ADMIN_PASSWORD) return next();
@@ -145,24 +155,43 @@ app.get('/api/qrcode/:tableId/print', (req, res) => {
   const table = db.tables.find(t => t.id === req.params.tableId);
   if (!table) return res.status(404).send('Mesa não encontrada');
 
+  const s = db.settings || {};
+  const barName = s.barName || 'Meu Bar';
+  const tagline = s.tagline || 'Escaneie para chamar o garçom';
+  const logoHtml = s.logo?.url
+    ? `<img src="${s.logo.url}" alt="Logo" style="max-height:80px;max-width:200px;object-fit:contain;margin-bottom:0.5rem;">`
+    : `<div style="font-size:2rem;">🍺</div>`;
+
   res.send(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>QR Code - ${table.name}</title>
 <style>
-  body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fff; }
-  h1 { font-size: 2.5rem; margin: 0.5rem 0; color: #1a1a2e; }
-  img { width: 300px; height: 300px; }
-  p { color: #555; font-size: 0.9rem; margin: 0.5rem 0; }
-  @media print { button { display: none; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #fff; }
+  .card {
+    border: 2px solid #1a1a2e; border-radius: 16px;
+    padding: 2rem 2.5rem; text-align: center;
+    width: 320px; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  }
+  .bar-name { font-size: 1.3rem; font-weight: 800; color: #1a1a2e; }
+  .table-name { font-size: 2rem; font-weight: 800; color: #f5a623; margin: 0.4rem 0; }
+  .qr { width: 240px; height: 240px; margin: 0.5rem 0; }
+  .tagline { font-size: 0.85rem; color: #555; max-width: 240px; line-height: 1.4; }
+  .print-btn { margin-top: 1.5rem; padding: 0.6rem 2rem; cursor: pointer; font-size: 1rem; }
+  @media print { .print-btn { display: none; } body { min-height: unset; } }
 </style>
 </head>
 <body>
-<h1>${table.name}</h1>
-<img src="/qrcodes/${table.id}.png" alt="QR Code ${table.name}">
-<p>Escaneie para chamar o garçom</p>
-<button onclick="window.print()" style="margin-top:1rem;padding:0.6rem 1.5rem;cursor:pointer;">Imprimir</button>
+<div class="card">
+  ${logoHtml}
+  <div class="bar-name">${barName}</div>
+  <div class="table-name">${table.name}</div>
+  <img class="qr" src="/qrcodes/${table.id}.png" alt="QR Code ${table.name}">
+  <div class="tagline">${tagline}</div>
+</div>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimir</button>
 <script>window.onload = () => window.print();</script>
 </body>
 </html>`);
@@ -210,6 +239,61 @@ app.delete('/api/menu', adminAuth, (req, res) => {
   if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
 
   db.menu = null;
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+// ─── API: Configurações do Bar ────────────────────────────────────────────────
+
+app.get('/api/settings', (req, res) => {
+  const db = readDB();
+  res.json(db.settings || {});
+});
+
+app.post('/api/settings', adminAuth, (req, res) => {
+  const { barName, tagline, welcomeMessage } = req.body;
+  const db = readDB();
+  if (!db.settings) db.settings = {};
+  if (barName !== undefined) db.settings.barName = barName.trim().slice(0, 80);
+  if (tagline !== undefined) db.settings.tagline = tagline.trim().slice(0, 120);
+  if (welcomeMessage !== undefined) db.settings.welcomeMessage = welcomeMessage.trim().slice(0, 240);
+  writeDB(db);
+  res.json(db.settings);
+});
+
+app.post('/api/settings/logo', adminAuth, uploadImage.single('logo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Nenhuma imagem enviada' });
+
+  const db = readDB();
+  if (!db.settings) db.settings = {};
+
+  if (db.settings.logo?.storedName) {
+    const oldPath = path.join(UPLOADS_DIR, db.settings.logo.storedName);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  const ext = path.extname(req.file.originalname) || '.png';
+  const storedName = `logo_${Date.now()}${ext}`;
+  fs.renameSync(req.file.path, path.join(UPLOADS_DIR, storedName));
+
+  db.settings.logo = {
+    originalName: req.file.originalname,
+    storedName,
+    url: `/uploads/${storedName}`,
+    uploadedAt: new Date().toISOString()
+  };
+  writeDB(db);
+  res.json(db.settings.logo);
+});
+
+app.delete('/api/settings/logo', adminAuth, (req, res) => {
+  const db = readDB();
+  if (!db.settings?.logo) return res.status(404).json({ error: 'Nenhum logotipo cadastrado' });
+
+  const oldPath = path.join(UPLOADS_DIR, db.settings.logo.storedName);
+  if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+
+  db.settings.logo = null;
   writeDB(db);
   res.json({ ok: true });
 });

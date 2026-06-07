@@ -188,6 +188,74 @@
 
   .empty-mesas { text-align: center; color: var(--text-muted); padding: 2rem; }
   .empty-mesas .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+
+  /* ─── Identidade do bar ──────────────────────────────── */
+  .identity-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .logo-preview-wrap {
+    width: 90px; height: 90px; flex-shrink: 0;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-size: 2.5rem;
+    position: relative;
+    cursor: pointer;
+  }
+  .logo-preview-wrap:hover::after {
+    content: '✏️';
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    border-radius: 50%;
+  }
+  .logo-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .logo-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .logo-actions small { color: var(--text-muted); font-size: 0.78rem; }
+  .logo-actions .btn-row { display: flex; gap: 0.5rem; }
+  .logo-actions .btn-row button { font-size: 0.82rem; padding: 0.45rem 0.9rem; }
+
+  .identity-fields { display: flex; flex-direction: column; gap: 0.75rem; }
+  .field-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem; }
+  .char-counter { font-size: 0.75rem; color: var(--text-muted); text-align: right; margin-top: 0.2rem; }
+
+  .identity-preview {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #fff;
+  }
+  .preview-logo-wrap {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0; font-size: 1.8rem;
+  }
+  .preview-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-text {}
+  .preview-bar-name { font-size: 1.1rem; font-weight: 800; }
+  .preview-tagline { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 0.15rem; }
+  .preview-label { font-size: 0.72rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
 </style>
 </head>
 <body>
@@ -243,6 +311,68 @@
           <span class="icon">🪑</span>
           <p>Nenhuma mesa cadastrada ainda.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- ─── Identidade do Bar ─── -->
+    <section class="section">
+      <div class="section-title">🏪 Identidade do Bar</div>
+
+      <div class="identity-card">
+
+        <!-- Logo -->
+        <div class="logo-row">
+          <div class="logo-preview-wrap" id="logo-preview-wrap" onclick="document.getElementById('logo-input').click()" title="Clique para trocar o logo">
+            <span id="logo-preview-emoji">🍺</span>
+          </div>
+          <div class="logo-actions">
+            <div class="field-label">Logotipo do Estabelecimento</div>
+            <small>JPG, PNG, WEBP ou SVG — máx. 5MB<br>Aparece na página do cliente e no balcão</small>
+            <div class="btn-row">
+              <button class="btn-accent" onclick="document.getElementById('logo-input').click()">📷 Enviar Logo</button>
+              <button class="btn-danger" id="btn-remover-logo" onclick="removerLogo()" style="display:none">🗑️ Remover</button>
+            </div>
+            <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="logoSelecionado()">
+          </div>
+        </div>
+
+        <!-- Campos de texto -->
+        <div class="identity-fields">
+          <div>
+            <div class="field-label">Nome do Estabelecimento</div>
+            <input type="text" id="input-bar-name" placeholder="Ex: Bar do Zé, Choperia Boa Vista..." maxlength="80"
+              oninput="atualizarPreview();document.getElementById('count-name').textContent=this.value.length+'/80'">
+            <div class="char-counter"><span id="count-name">0</span>/80</div>
+          </div>
+          <div>
+            <div class="field-label">Slogan / Tagline <span style="font-weight:400;color:#aaa">(aparece abaixo do nome)</span></div>
+            <input type="text" id="input-tagline" placeholder="Ex: O melhor chope da cidade!" maxlength="120"
+              oninput="atualizarPreview();document.getElementById('count-tagline').textContent=this.value.length+'/120'">
+            <div class="char-counter"><span id="count-tagline">0</span>/120</div>
+          </div>
+          <div>
+            <div class="field-label">Mensagem de Boas-vindas <span style="font-weight:400;color:#aaa">(exibida na mesa do cliente)</span></div>
+            <input type="text" id="input-welcome" placeholder="Ex: Fique à vontade e aproveite!" maxlength="240"
+              oninput="document.getElementById('count-welcome').textContent=this.value.length+'/240'">
+            <div class="char-counter"><span id="count-welcome">0</span>/240</div>
+          </div>
+          <button class="btn-success btn-full" onclick="salvarIdentidade()">💾 Salvar Identidade do Bar</button>
+        </div>
+
+        <!-- Preview ao vivo -->
+        <div>
+          <div class="preview-label">Pré-visualização (como o cliente vê)</div>
+          <div class="identity-preview">
+            <div class="preview-logo-wrap" id="preview-logo-wrap">
+              <span id="preview-logo-emoji">🍺</span>
+            </div>
+            <div class="preview-text">
+              <div class="preview-bar-name" id="preview-bar-name">Nome do Bar</div>
+              <div class="preview-tagline" id="preview-tagline">Slogan aparece aqui</div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -339,6 +469,94 @@ function showPainel() {
   document.getElementById('link-balcao').href = `${base}/balcao`;
   carregarMesas();
   carregarMenu();
+  carregarIdentidade();
+}
+
+// ─── Identidade do Bar ─────────────────────────────────
+async function carregarIdentidade() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const s = await res.json();
+    const nameEl = document.getElementById('input-bar-name');
+    const taglineEl = document.getElementById('input-tagline');
+    const welcomeEl = document.getElementById('input-welcome');
+    nameEl.value = s.barName || '';
+    taglineEl.value = s.tagline || '';
+    welcomeEl.value = s.welcomeMessage || '';
+    document.getElementById('count-name').textContent = nameEl.value.length + '/80';
+    document.getElementById('count-tagline').textContent = taglineEl.value.length + '/120';
+    document.getElementById('count-welcome').textContent = welcomeEl.value.length + '/240';
+    if (s.logo?.url) aplicarLogoPreview(s.logo.url);
+    atualizarPreview();
+  } catch {}
+}
+
+function atualizarPreview() {
+  const name = document.getElementById('input-bar-name').value || 'Nome do Bar';
+  const tagline = document.getElementById('input-tagline').value || 'Slogan aparece aqui';
+  document.getElementById('preview-bar-name').textContent = name;
+  document.getElementById('preview-tagline').textContent = tagline;
+}
+
+function aplicarLogoPreview(url) {
+  document.getElementById('logo-preview-wrap').innerHTML = `<img src="${url}" alt="Logo">`;
+  document.getElementById('preview-logo-wrap').innerHTML = `<img src="${url}" alt="Logo" style="width:100%;height:100%;object-fit:cover;">`;
+  document.getElementById('btn-remover-logo').style.display = 'inline-block';
+}
+
+function logoSelecionado() {
+  const file = document.getElementById('logo-input').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => aplicarLogoPreview(e.target.result);
+  reader.readAsDataURL(file);
+  enviarLogo(file);
+}
+
+async function enviarLogo(file) {
+  const form = new FormData();
+  form.append('logo', file);
+  try {
+    const res = await fetch('/api/settings/logo', {
+      method: 'POST',
+      headers: { 'x-admin-token': adminToken },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao enviar logo.', 'error'); return; }
+    aplicarLogoPreview(data.url);
+    toast('✅ Logo enviado!', 'success');
+  } catch { toast('Erro ao enviar logo.', 'error'); }
+}
+
+async function removerLogo() {
+  if (!confirm('Remover o logotipo?')) return;
+  try {
+    const res = await fetch('/api/settings/logo', { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
+    document.getElementById('logo-preview-wrap').innerHTML = '<span id="logo-preview-emoji">🍺</span>';
+    document.getElementById('preview-logo-wrap').innerHTML = '<span id="preview-logo-emoji">🍺</span>';
+    document.getElementById('btn-remover-logo').style.display = 'none';
+    toast('Logo removido.', '');
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function salvarIdentidade() {
+  const barName = document.getElementById('input-bar-name').value.trim();
+  const tagline = document.getElementById('input-tagline').value.trim();
+  const welcomeMessage = document.getElementById('input-welcome').value.trim();
+  if (!barName) { toast('Digite o nome do estabelecimento.', 'error'); return; }
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify({ barName, tagline, welcomeMessage })
+    });
+    if (!res.ok) { toast('Erro ao salvar.', 'error'); return; }
+    toast('✅ Identidade salva com sucesso!', 'success');
+    atualizarPreview();
+  } catch { toast('Erro de conexão.', 'error'); }
 }
 
 // ─── Mesas ─────────────────────────────────────────────

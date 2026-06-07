@@ -11,30 +11,73 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
     color: var(--white);
   }
 
-  .mesa-header {
+  /* ── Identidade do bar ─────────────────────────────── */
+  .bar-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1.5rem 0.75rem;
+    gap: 0.6rem;
     text-align: center;
-    padding: 2rem 1.25rem 1rem;
   }
 
-  .mesa-emoji { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+  .bar-logo-wrap {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2.5px solid rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .bar-logo-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .bar-logo-emoji { font-size: 2.8rem; line-height: 1; }
 
+  .bar-name {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--white);
+  }
+  .bar-tagline {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  /* ── Divisor ───────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.12);
+    margin: 0.5rem 1.5rem;
+  }
+
+  /* ── Mesa ──────────────────────────────────────────── */
+  .mesa-label {
+    text-align: center;
+    padding: 0.75rem 1.5rem 0;
+  }
   .mesa-name {
-    font-size: 2.5rem;
+    font-size: 2.4rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--accent);
   }
-
   .mesa-sub {
-    font-size: 1rem;
-    color: rgba(255,255,255,0.65);
-    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 0.2rem;
   }
 
+  /* ── Ações ─────────────────────────────────────────── */
   .mesa-content {
     flex: 1;
     display: flex;
@@ -42,14 +85,14 @@
     align-items: center;
     justify-content: center;
     padding: 1.5rem 2rem 3rem;
-    gap: 1.25rem;
+    gap: 1.1rem;
   }
 
   #btn-chamar {
     width: 100%;
     max-width: 340px;
     padding: 1.3rem;
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     font-weight: 800;
     letter-spacing: 0.02em;
     border-radius: 16px;
@@ -57,128 +100,91 @@
     color: #fff;
     border: none;
     box-shadow: 0 6px 30px rgba(245,166,35,0.45);
-    position: relative;
-    overflow: hidden;
   }
-  #btn-chamar:hover:not(:disabled) {
-    background: var(--accent-dark);
-    box-shadow: 0 8px 40px rgba(245,166,35,0.6);
-  }
-  #btn-chamar.loading {
-    background: #888;
-    box-shadow: none;
-  }
-  #btn-chamar.success {
-    background: var(--success);
-    box-shadow: 0 6px 24px rgba(39,174,96,0.45);
-  }
-  #btn-chamar.error {
-    background: var(--danger);
-    box-shadow: 0 6px 24px rgba(231,76,60,0.45);
-  }
+  #btn-chamar:hover:not(:disabled) { background: var(--accent-dark); box-shadow: 0 8px 40px rgba(245,166,35,0.6); }
+  #btn-chamar.loading { background: #888; box-shadow: none; }
+  #btn-chamar.success { background: var(--success); box-shadow: 0 6px 24px rgba(39,174,96,0.45); }
+  #btn-chamar.error   { background: var(--danger);  box-shadow: 0 6px 24px rgba(231,76,60,0.45); }
 
-  .btn-icon { font-size: 1.6rem; display: block; margin-bottom: 0.3rem; }
+  .btn-icon { font-size: 1.5rem; display: block; margin-bottom: 0.3rem; }
 
   #btn-cardapio {
     width: 100%;
     max-width: 340px;
     padding: 1rem;
-    font-size: 1.05rem;
-    font-weight: 600;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.12);
-    color: var(--white);
-    border: 1.5px solid rgba(255,255,255,0.25);
-    backdrop-filter: blur(6px);
-  }
-  #btn-cardapio:hover:not(:disabled) {
-    background: rgba(255,255,255,0.2);
-  }
-
-  .feedback-box {
-    max-width: 340px;
-    width: 100%;
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    text-align: center;
     font-size: 1rem;
     font-weight: 600;
-    transition: opacity 0.3s;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+    color: var(--white);
+    border: 1.5px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(6px);
+  }
+  #btn-cardapio:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
+
+  .feedback-box {
+    max-width: 340px; width: 100%;
+    padding: 0.9rem 1.1rem;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
   }
   .feedback-box.success { background: rgba(39,174,96,0.2); border: 1.5px solid #27ae60; color: #7dffb0; }
   .feedback-box.error   { background: rgba(231,76,60,0.2); border: 1.5px solid #e74c3c; color: #ffaaaa; }
   .feedback-box.info    { background: rgba(245,166,35,0.15); border: 1.5px solid var(--accent); color: var(--accent); }
 
-  .cooldown-bar {
-    width: 100%;
-    max-width: 340px;
-    height: 4px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .cooldown-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    transition: width 1s linear;
-  }
+  .cooldown-bar { width: 100%; max-width: 340px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden; }
+  .cooldown-bar-fill { height: 100%; background: var(--accent); transition: width 1s linear; }
 
-  /* Overlay de imagem para cardápio */
+  /* ── Overlay cardápio imagem ────────────────────────── */
   #cardapio-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.92);
+    background: rgba(0,0,0,0.93);
     z-index: 999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 1rem;
   }
-  #cardapio-overlay img {
-    max-width: 100%; max-height: 85vh;
-    border-radius: 8px;
-    object-fit: contain;
-  }
+  #cardapio-overlay img { max-width: 100%; max-height: 85vh; border-radius: 8px; object-fit: contain; }
   #cardapio-overlay button {
     margin-top: 1rem;
-    background: rgba(255,255,255,0.15);
-    color: #fff;
+    background: rgba(255,255,255,0.15); color: #fff;
     border: 1.5px solid rgba(255,255,255,0.3);
-    padding: 0.6rem 2rem;
-    border-radius: 8px;
-    font-size: 1rem;
+    padding: 0.6rem 2rem; border-radius: 8px; font-size: 1rem;
   }
 
+  /* ── Erro ────────────────────────────────────────────── */
   #erro-mesa {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem;
-    gap: 1rem;
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 2rem; gap: 1rem;
   }
   #erro-mesa .icon { font-size: 4rem; }
   #erro-mesa h2 { font-size: 1.5rem; color: #ff7070; }
   #erro-mesa p  { color: rgba(255,255,255,0.6); max-width: 280px; }
 
-  /* Spinner simples */
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner {
-    width: 24px; height: 24px;
+    width: 22px; height: 22px;
     border: 3px solid rgba(255,255,255,0.3);
     border-top-color: #fff;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    display: inline-block; vertical-align: middle;
-    margin-right: 0.5rem;
+    display: inline-block; vertical-align: middle; margin-right: 0.5rem;
   }
+
+  /* pulse apenas no btn-chamar */
+  @keyframes pulse-btn {
+    0%   { box-shadow: 0 6px 30px rgba(245,166,35,0.45), 0 0 0 0 rgba(245,166,35,0.6); }
+    70%  { box-shadow: 0 6px 30px rgba(245,166,35,0.45), 0 0 0 18px rgba(245,166,35,0); }
+    100% { box-shadow: 0 6px 30px rgba(245,166,35,0.45), 0 0 0 0 rgba(245,166,35,0); }
+  }
+  #btn-chamar.pulse { animation: pulse-btn 2s infinite; }
 </style>
 </head>
 <body>
 
-<!-- Estado de erro: mesa não encontrada -->
+<!-- Erro: mesa não encontrada -->
 <section id="erro-mesa" class="hidden">
   <span class="icon">❌</span>
   <h2>Mesa não encontrada</h2>
@@ -187,12 +193,25 @@
 
 <!-- Conteúdo principal -->
 <section id="main-content" class="hidden">
-  <header class="mesa-header">
-    <span class="mesa-emoji">🍺</span>
-    <div class="mesa-name" id="mesa-nome">Mesa</div>
-    <div class="mesa-sub">Escaneie para ser atendido</div>
-  </header>
 
+  <!-- Identidade do bar -->
+  <div class="bar-identity">
+    <div class="bar-logo-wrap" id="logo-wrap">
+      <span class="bar-logo-emoji">🍺</span>
+    </div>
+    <div class="bar-name" id="bar-name">Carregando...</div>
+    <div class="bar-tagline" id="bar-tagline"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Identificação da mesa -->
+  <div class="mesa-label">
+    <div class="mesa-name" id="mesa-nome">Mesa</div>
+    <div class="mesa-sub" id="bar-welcome"></div>
+  </div>
+
+  <!-- Ações -->
   <main class="mesa-content">
     <button id="btn-chamar" class="pulse" onclick="chamarGarcom()">
       <span class="btn-icon">🔔</span>
@@ -225,7 +244,6 @@ const tableId = window.location.pathname.split('/')[2];
 const COOLDOWN_SECONDS = 60;
 let socket;
 let cooldownTimer = null;
-let tableData = null;
 
 function toast(msg, type = '') {
   const el = document.createElement('div');
@@ -266,9 +284,7 @@ function showFeedback(msg, type) {
   el.textContent = msg;
   el.className = `feedback-box ${type}`;
   el.classList.remove('hidden');
-  if (type === 'success') {
-    setTimeout(() => el.classList.add('hidden'), 8000);
-  }
+  if (type === 'success') setTimeout(() => el.classList.add('hidden'), 9000);
 }
 
 function startCooldown(seconds) {
@@ -290,9 +306,7 @@ function startCooldown(seconds) {
 }
 
 function chamarGarcom() {
-  if (!socket?.connected) {
-    toast('Sem conexão. Recarregue a página.', 'error'); return;
-  }
+  if (!socket?.connected) { toast('Sem conexão. Recarregue a página.', 'error'); return; }
   setButtonState('loading');
   socket.emit('table:call', { tableId });
 }
@@ -308,27 +322,48 @@ async function verCardapio() {
       document.getElementById('cardapio-img').src = menu.url;
       document.getElementById('cardapio-overlay').classList.remove('hidden');
     }
-  } catch {
-    toast('Erro ao carregar cardápio.', 'error');
-  }
+  } catch { toast('Erro ao carregar cardápio.', 'error'); }
 }
 
 function fecharCardapio() {
   document.getElementById('cardapio-overlay').classList.add('hidden');
 }
 
+function applySettings(s) {
+  if (!s) return;
+  if (s.barName) document.getElementById('bar-name').textContent = s.barName;
+  if (s.tagline) document.getElementById('bar-tagline').textContent = s.tagline;
+  if (s.welcomeMessage) document.getElementById('bar-welcome').textContent = s.welcomeMessage;
+
+  if (s.logo?.url) {
+    const wrap = document.getElementById('logo-wrap');
+    wrap.innerHTML = `<img src="${s.logo.url}" alt="Logo ${s.barName}">`;
+  }
+
+  // Atualiza título da página
+  if (s.barName) document.title = s.barName;
+}
+
 async function init() {
   if (!tableId) { showError(); return; }
   try {
-    const res = await fetch(`/api/mesas/${tableId}`);
-    if (!res.ok) { showError(); return; }
-    tableData = await res.json();
-    document.getElementById('mesa-nome').textContent = tableData.name;
+    const [tableRes, settingsRes, menuRes] = await Promise.all([
+      fetch(`/api/mesas/${tableId}`),
+      fetch('/api/settings'),
+      fetch('/api/menu')
+    ]);
+
+    if (!tableRes.ok) { showError(); return; }
+
+    const table = await tableRes.json();
+    const settings = settingsRes.ok ? await settingsRes.json() : null;
+    const menu = menuRes.ok ? await menuRes.json() : null;
+
+    document.getElementById('mesa-nome').textContent = table.name;
     document.getElementById('main-content').classList.remove('hidden');
 
-    // Verifica se tem cardápio
-    const mRes = await fetch('/api/menu');
-    const menu = await mRes.json();
+    applySettings(settings);
+
     if (menu) document.getElementById('btn-cardapio').classList.remove('hidden');
 
     connectSocket();
@@ -344,9 +379,7 @@ function showError() {
 function connectSocket() {
   socket = io({ transports: ['websocket', 'polling'] });
 
-  socket.on('connect', () => {
-    socket.emit('join:mesa', { tableId });
-  });
+  socket.on('connect', () => socket.emit('join:mesa', { tableId }));
 
   socket.on('call:confirmed', ({ repeated }) => {
     if (repeated) {
@@ -366,14 +399,8 @@ function connectSocket() {
     if (cooldownTimer) { clearInterval(cooldownTimer); document.getElementById('cooldown-bar').classList.add('hidden'); }
   });
 
-  socket.on('erro', ({ message }) => {
-    setButtonState('error');
-    toast(message, 'error');
-  });
-
-  socket.on('disconnect', () => {
-    toast('Conexão perdida. Reconectando...', '');
-  });
+  socket.on('erro', ({ message }) => { setButtonState('error'); toast(message, 'error'); });
+  socket.on('disconnect', () => toast('Conexão perdida. Reconectando...', ''));
 }
 
 init();

@@ -1,5 +1,11 @@
 {
   "tables": [],
   "menu": null,
-  "activeCalls": []
+  "activeCalls": [],
+  "settings": {
+    "barName": "Meu Bar",
+    "tagline": "Bem-vindo! Estamos felizes em atendê-lo.",
+    "welcomeMessage": "Escaneie o QR code da sua mesa para chamar o garçom.",
+    "logo": null
+  }
 }

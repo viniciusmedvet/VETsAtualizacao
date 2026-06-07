@@ -179,8 +179,13 @@
 <!-- Header -->
 <header class="balcao-header">
   <div class="header-left">
-    <span style="font-size:1.5rem">🍺</span>
-    <h1>Chamadas de Mesa</h1>
+    <div id="header-logo" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+      <span style="font-size:1.4rem">🍺</span>
+    </div>
+    <div>
+      <h1 id="header-bar-name">Chamadas de Mesa</h1>
+      <div id="header-bar-sub" style="font-size:0.72rem;color:rgba(255,255,255,0.5);line-height:1;"></div>
+    </div>
     <span id="badge-count" class="badge-count hidden">0</span>
   </div>
   <div class="header-right">
@@ -373,6 +378,26 @@ function connectSocket() {
     onCallAttended(tableId, callId);
   });
 }
+
+// Carrega identidade do bar
+(async () => {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const s = await res.json();
+    if (s.barName) {
+      document.getElementById('header-bar-name').textContent = s.barName;
+      document.title = `Balcão — ${s.barName}`;
+    }
+    if (s.tagline) {
+      document.getElementById('header-bar-sub').textContent = s.tagline;
+    }
+    if (s.logo?.url) {
+      document.getElementById('header-logo').innerHTML =
+        `<img src="${s.logo.url}" alt="Logo" style="width:100%;height:100%;object-fit:cover;">`;
+    }
+  } catch {}
+})();
 
 // Atualiza os tempos relativos a cada 30 segundos
 timeUpdater = setInterval(() => {
