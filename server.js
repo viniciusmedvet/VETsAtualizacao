@@ -420,6 +420,31 @@ app.delete('/api/settings/logo', adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── API: Ocupação das Mesas ──────────────────────────────────────────────────
+
+app.post('/api/mesas/:tableId/status', adminAuth, (req, res) => {
+  const { status } = req.body;
+  const allowed = ['livre', 'ocupada'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Status inválido' });
+
+  const db = readDB();
+  const table = db.tables.find(t => t.id === req.params.tableId);
+  if (!table) return res.status(404).json({ error: 'Mesa não encontrada' });
+
+  if (status === 'livre') {
+    table.status = 'livre';
+    table.occupiedAt = null;
+    db.activeCalls = db.activeCalls.filter(c => c.tableId !== table.id);
+  } else {
+    table.status = 'ocupada';
+    table.occupiedAt = new Date().toISOString();
+  }
+  writeDB(db);
+
+  io.emit('table:status-changed', { tableId: table.id, status: table.status, occupiedAt: table.occupiedAt });
+  res.json({ tableId: table.id, status: table.status });
+});
+
 // ─── API: Chamadas ────────────────────────────────────────────────────────────
 
 app.get('/api/chamadas', (req, res) => {
@@ -437,17 +462,20 @@ io.on('connection', (socket) => {
     const db = readDB();
     const today = new Date().toISOString().slice(0, 10);
     const todayCount = (db.callHistory || []).filter(h => h.date === today).length;
-    socket.emit('init:balcao', { pendingCalls: db.activeCalls, todayCount });
+    // Envia status de todas as mesas junto com as chamadas pendentes
+    const tableStatuses = db.tables.map(t => ({
+      tableId: t.id, name: t.name,
+      status: t.status || 'livre',
+      occupiedAt: t.occupiedAt || null
+    }));
+    socket.emit('init:balcao', { pendingCalls: db.activeCalls, todayCount, tableStatuses });
     console.log(`[Socket] Balcão conectado: ${socket.id}`);
   });
 
   socket.on('table:call', ({ tableId }) => {
     const db = readDB();
     const table = db.tables.find(t => t.id === tableId);
-    if (!table) {
-      socket.emit('erro', { message: 'Mesa não encontrada' });
-      return;
-    }
+    if (!table) { socket.emit('erro', { message: 'Mesa não encontrada' }); return; }
 
     const existing = db.activeCalls.find(c => c.tableId === tableId);
     if (existing) {
@@ -464,9 +492,12 @@ io.on('connection', (socket) => {
     };
 
     db.activeCalls.push(call);
+    table.status = 'chamando';
+    if (!table.occupiedAt) table.occupiedAt = call.calledAt;
     writeDB(db);
 
     io.to('balcao').emit('table:calling', call);
+    io.emit('table:status-changed', { tableId: table.id, status: 'chamando', occupiedAt: table.occupiedAt });
     socket.emit('call:confirmed', { tableId, tableName: table.name });
     console.log(`[Socket] Mesa chamando: ${table.name}`);
   });
@@ -485,13 +516,42 @@ io.on('connection', (socket) => {
       attendedAt: new Date().toISOString(),
       date: new Date().toISOString().slice(0, 10)
     });
-    // Mantém no máximo 500 registros para não crescer infinito
     if (db.callHistory.length > 500) db.callHistory = db.callHistory.slice(-500);
+
+    // Volta para ocupada após atender
+    const table = db.tables.find(t => t.id === tableId);
+    if (table) table.status = 'ocupada';
     writeDB(db);
 
+    const today = new Date().toISOString().slice(0, 10);
     io.emit('call:attended', { tableId, callId: call.callId });
-    io.to('balcao').emit('stats:update', { todayCount: db.callHistory.filter(h => h.date === new Date().toISOString().slice(0, 10)).length });
+    io.emit('table:status-changed', { tableId, status: 'ocupada', occupiedAt: table?.occupiedAt });
+    io.to('balcao').emit('stats:update', { todayCount: db.callHistory.filter(h => h.date === today).length });
     console.log(`[Socket] Atendido: mesa ${call.tableName}`);
+  });
+
+  socket.on('table:open', ({ tableId }) => {
+    const db = readDB();
+    const table = db.tables.find(t => t.id === tableId);
+    if (!table || table.status === 'chamando') return;
+    table.status = 'ocupada';
+    table.occupiedAt = new Date().toISOString();
+    writeDB(db);
+    io.emit('table:status-changed', { tableId, status: 'ocupada', occupiedAt: table.occupiedAt });
+    console.log(`[Socket] Mesa aberta: ${table.name}`);
+  });
+
+  socket.on('table:close', ({ tableId }) => {
+    const db = readDB();
+    const table = db.tables.find(t => t.id === tableId);
+    if (!table) return;
+    table.status = 'livre';
+    table.occupiedAt = null;
+    db.activeCalls = db.activeCalls.filter(c => c.tableId !== tableId);
+    writeDB(db);
+    io.emit('table:status-changed', { tableId, status: 'livre', occupiedAt: null });
+    io.emit('call:attended', { tableId, callId: null });
+    console.log(`[Socket] Mesa liberada: ${table.name}`);
   });
 
   socket.on('disconnect', () => {

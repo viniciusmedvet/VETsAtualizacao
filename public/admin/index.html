@@ -343,6 +343,11 @@
   }
   .color-chip:hover { transform: scale(1.18); }
   .color-chip.active { border-color: #1a1a2e; transform: scale(1.1); }
+
+  /* Badges de status (usados nas mesas) */
+  .badge-livre    { background: #d5f5e3; color: #1e8449; }
+  .badge-ocupada  { background: #fdebd0; color: #935116; }
+  .badge-chamando { background: #fadbd8; color: #922b21; }
 </style>
 </head>
 <body>
@@ -394,7 +399,10 @@
         <input type="text" id="mesa-nome-input" placeholder="Ex: Mesa 1" maxlength="30">
         <button class="btn-accent" onclick="criarMesa()">+ Adicionar Mesa</button>
       </div>
-      <div class="mesa-count" id="mesa-count-label">0 mesas cadastradas</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;">
+        <div class="mesa-count" id="mesa-count-label">0 mesas cadastradas</div>
+        <div id="occ-summary-admin" style="font-size:0.82rem;"></div>
+      </div>
 
       <div id="mesas-grid">
         <div class="empty-mesas">
@@ -774,10 +782,32 @@ async function carregarMesas() {
   } catch { toast('Erro ao carregar mesas.', 'error'); }
 }
 
+function statusBadgeHtml(status) {
+  const map = {
+    livre:    { cls: 'badge-livre',    dot: '🟢', label: 'Livre'    },
+    ocupada:  { cls: 'badge-ocupada',  dot: '🟡', label: 'Ocupada'  },
+    chamando: { cls: 'badge-chamando', dot: '🔴', label: 'Chamando' },
+  };
+  const s = map[status] || map['livre'];
+  return `<span class="mesa-status-badge ${s.cls}" style="font-size:0.72rem;padding:0.15rem 0.55rem;border-radius:99px;font-weight:700;">${s.dot} ${s.label}</span>`;
+}
+
 function renderMesas(mesas) {
   const grid = document.getElementById('mesas-grid');
   document.getElementById('mesa-count-label').textContent = `${mesas.length}/50 mesas cadastradas`;
   document.getElementById('btn-print-all').disabled = mesas.length === 0;
+
+  // Mini painel de ocupação
+  const livre    = mesas.filter(m => (m.status||'livre') === 'livre').length;
+  const ocupada  = mesas.filter(m => m.status === 'ocupada').length;
+  const chamando = mesas.filter(m => m.status === 'chamando').length;
+  const summaryEl = document.getElementById('occ-summary-admin');
+  if (summaryEl && mesas.length > 0) {
+    summaryEl.innerHTML = `
+      <span style="color:#1e8449;font-weight:700;">🟢 ${livre} livre${livre!==1?'s':''}</span> &nbsp;
+      <span style="color:#935116;font-weight:700;">🟡 ${ocupada} ocupada${ocupada!==1?'s':''}</span> &nbsp;
+      <span style="color:#922b21;font-weight:700;">🔴 ${chamando} chamando</span>`;
+  }
 
   if (mesas.length === 0) {
     grid.innerHTML = '<div class="empty-mesas"><span class="icon">🪑</span><p>Nenhuma mesa cadastrada ainda.<br>Adicione a primeira mesa acima.</p></div>';
@@ -786,12 +816,16 @@ function renderMesas(mesas) {
 
   grid.innerHTML = '';
   mesas.forEach(mesa => {
+    const status = mesa.status || 'livre';
     const card = document.createElement('div');
     card.className = 'mesa-card';
     card.id = `mesa-card-${mesa.id}`;
     card.innerHTML = `
       <img class="qr-preview" src="${mesa.qrFile}" alt="QR ${mesa.name}">
-      <div class="mesa-card-name">🪑 ${mesa.name}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+        <div class="mesa-card-name">🪑 ${mesa.name}</div>
+        ${statusBadgeHtml(status)}
+      </div>
       <div class="mesa-card-actions">
         <button class="btn-outline" onclick="imprimirQR('${mesa.id}')">🖨️ Imprimir</button>
         <a href="${mesa.qrFile}" download="qr-${mesa.name}.png">

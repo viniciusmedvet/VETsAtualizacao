@@ -7,172 +7,213 @@
 <title>Balcão — Chamadas</title>
 <link rel="stylesheet" href="/shared/style.css">
 <style>
-  body { min-height: 100vh; background: var(--bg); }
+  body { min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
 
+  /* ── Header ─────────────────────────────────────────── */
   .balcao-header {
     background: var(--primary);
     color: #fff;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1.1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    flex-shrink: 0;
   }
-  .header-left { display: flex; align-items: center; gap: 0.75rem; }
-  .header-left h1 { font-size: 1.15rem; font-weight: 700; }
-  .header-right { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; color: rgba(255,255,255,0.75); }
+  .header-left { display: flex; align-items: center; gap: 0.7rem; }
+  .header-left h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+  .header-left .sub { font-size: 0.7rem; color: rgba(255,255,255,0.5); line-height: 1; }
+  .header-right { display: flex; align-items: center; gap: 0.75rem; }
+  .stat-box { text-align: right; }
+  .stat-box .val { font-size: 1.2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .stat-box .lbl { font-size: 0.65rem; color: rgba(255,255,255,0.4); }
+  .vline { width: 1px; height: 32px; background: rgba(255,255,255,0.15); }
 
   .badge-count {
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-    min-width: 26px;
-    text-align: center;
+    background: var(--accent); color: #fff;
+    font-size: 0.78rem; font-weight: 700;
+    padding: 0.1rem 0.55rem; border-radius: 999px;
+    min-width: 22px; text-align: center;
   }
 
-  .content { padding: 1.25rem; max-width: 700px; margin: 0 auto; }
+  /* ── Abas ───────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    background: var(--primary-light, #16213e);
+    flex-shrink: 0;
+  }
+  .tab-btn {
+    flex: 1; padding: 0.7rem 0.5rem;
+    background: transparent; color: rgba(255,255,255,0.55);
+    border: none; border-bottom: 3px solid transparent;
+    font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: color 0.2s, border-color 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn:hover:not(.active) { color: rgba(255,255,255,0.8); }
 
-  /* Estado vazio */
+  /* ── Conteúdo das abas ──────────────────────────────── */
+  .tab-panel { display: none; flex: 1; overflow-y: auto; padding: 1rem; }
+  .tab-panel.active { display: block; }
+
+  /* ── Chamadas ───────────────────────────────────────── */
   .empty-state {
-    text-align: center;
-    padding: 5rem 2rem;
+    text-align: center; padding: 4rem 2rem;
     color: var(--text-muted);
   }
-  .empty-state .icon { font-size: 4rem; display: block; margin-bottom: 1rem; }
-  .empty-state h2 { font-size: 1.3rem; color: #555; margin-bottom: 0.5rem; }
+  .empty-state .icon { font-size: 3.5rem; display: block; margin-bottom: 0.75rem; }
+  .empty-state h2 { font-size: 1.2rem; color: #666; margin-bottom: 0.4rem; }
 
-  /* Cards de chamada */
-  #calls-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
-  }
+  #calls-grid { display: flex; flex-direction: column; gap: 0.9rem; max-width: 600px; margin: 0 auto; }
 
   .call-card {
     background: var(--white);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     border-left: 5px solid var(--accent);
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    animation: slideIn 0.35s ease;
-    position: relative;
-    overflow: hidden;
+    padding: 1.1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    animation: slideIn 0.3s ease;
   }
-  .call-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(245,166,35,0.06), transparent);
-    pointer-events: none;
+  .call-card.removing {
+    opacity: 0; transform: translateX(40px) scale(0.95);
+    transition: all 0.35s ease; pointer-events: none;
   }
-  .call-card.attended {
-    opacity: 0;
-    transform: scale(0.9) translateY(-10px);
-    transition: all 0.4s ease;
-    pointer-events: none;
-  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } }
 
-  .call-card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .call-bell {
-    font-size: 2rem;
-    animation: bellRing 1s ease-in-out infinite;
-    flex-shrink: 0;
-  }
+  .call-bell { font-size: 2rem; animation: bellRing 1.4s ease infinite; flex-shrink: 0; }
   @keyframes bellRing {
-    0%, 100% { transform: rotate(0deg); }
-    20%       { transform: rotate(-15deg); }
-    40%       { transform: rotate(15deg); }
-    60%       { transform: rotate(-10deg); }
-    80%       { transform: rotate(10deg); }
+    0%,100% { transform: rotate(0); }
+    15%      { transform: rotate(-18deg); }
+    30%      { transform: rotate(18deg); }
+    45%      { transform: rotate(-12deg); }
+    60%      { transform: rotate(12deg); }
   }
   .call-info { flex: 1; min-width: 0; }
-  .call-table-name {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--primary);
-    line-height: 1.2;
-  }
-  .call-time {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-top: 0.2rem;
-  }
+  .call-name { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
+  .call-time { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.1rem; }
 
   .btn-atender {
-    background: var(--success);
-    color: #fff;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-weight: 700;
-    border-radius: var(--radius-sm);
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+    background: var(--success); color: #fff;
+    padding: 0.65rem 1rem; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 700;
+    display: flex; align-items: center; gap: 0.4rem;
+    flex-shrink: 0; white-space: nowrap;
   }
   .btn-atender:hover:not(:disabled) { background: #219a52; }
 
-  /* Overlay de ativação de som */
+  /* ── Grid de Mesas ──────────────────────────────────── */
+  .mesas-toolbar {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.85rem; flex-wrap: wrap;
+  }
+  .legend { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--text-muted); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-livre    { background: #27ae60; }
+  .dot-ocupada  { background: #f5a623; }
+  .dot-chamando { background: #e74c3c; }
+
+  #mesas-grid-occ {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.8rem;
+    max-width: 700px; margin: 0 auto;
+  }
+
+  .mesa-occ-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1rem 0.9rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.55rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border-top: 4px solid #ccc;
+    position: relative;
+    text-align: center;
+  }
+  .mesa-occ-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+
+  .mesa-occ-card.livre    { border-top-color: #27ae60; }
+  .mesa-occ-card.ocupada  { border-top-color: #f5a623; }
+  .mesa-occ-card.chamando {
+    border-top-color: #e74c3c;
+    animation: pulseCard 1.5s infinite;
+  }
+  @keyframes pulseCard {
+    0%,100% { box-shadow: 0 2px 12px rgba(0,0,0,0.10); }
+    50%      { box-shadow: 0 0 0 6px rgba(231,76,60,0.2), 0 2px 12px rgba(0,0,0,0.10); }
+  }
+
+  .mesa-status-icon { font-size: 1.8rem; line-height: 1; }
+  .mesa-occ-name { font-size: 1rem; font-weight: 800; color: var(--primary); }
+  .mesa-status-badge {
+    font-size: 0.72rem; font-weight: 700;
+    padding: 0.2rem 0.65rem; border-radius: 99px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .badge-livre    { background: #d5f5e3; color: #1e8449; }
+  .badge-ocupada  { background: #fdebd0; color: #935116; }
+  .badge-chamando { background: #fadbd8; color: #922b21; }
+
+  .mesa-time { font-size: 0.72rem; color: var(--text-muted); }
+
+  .mesa-occ-actions {
+    display: flex; gap: 0.4rem; width: 100%;
+  }
+  .mesa-occ-actions button {
+    flex: 1; font-size: 0.72rem; font-weight: 700;
+    padding: 0.4rem 0.3rem; border-radius: 6px;
+  }
+
+  /* ── Modal confirmação ──────────────────────────────── */
+  #modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-box {
+    background: #fff; border-radius: 16px; padding: 1.75rem;
+    max-width: 340px; width: 100%; text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+  .modal-icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+  .modal-box h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--primary); }
+  .modal-box p  { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem; }
+  .modal-btns   { display: flex; gap: 0.65rem; }
+  .modal-btns button { flex: 1; padding: 0.75rem; font-weight: 700; border-radius: 10px; }
+
+  /* ── Sound overlay ──────────────────────────────────── */
   #sound-overlay {
     position: fixed; inset: 0;
-    background: rgba(26,26,46,0.95);
+    background: rgba(26,26,46,0.96);
     z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    text-align: center;
-    padding: 2rem;
-    gap: 1.5rem;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff; text-align: center; padding: 2rem; gap: 1.5rem;
   }
   #sound-overlay .icon { font-size: 4rem; }
   #sound-overlay h2 { font-size: 1.5rem; font-weight: 700; }
-  #sound-overlay p { color: rgba(255,255,255,0.7); max-width: 300px; }
+  #sound-overlay p  { color: rgba(255,255,255,0.65); max-width: 300px; font-size: 0.95rem; }
   #sound-overlay button {
-    background: var(--accent);
-    color: #fff;
-    font-size: 1.1rem;
-    font-weight: 700;
-    padding: 1rem 2.5rem;
-    border-radius: 12px;
+    background: var(--accent); color: #fff;
+    font-size: 1.1rem; font-weight: 700;
+    padding: 1rem 2.5rem; border-radius: 12px;
     box-shadow: 0 4px 20px rgba(245,166,35,0.4);
   }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes pulse-ring {
-    0%   { box-shadow: 0 0 0 0 rgba(245,166,35,0.7); }
-    70%  { box-shadow: 0 0 0 14px rgba(245,166,35,0); }
-    100% { box-shadow: 0 0 0 0 rgba(245,166,35,0); }
-  }
-  .call-card { animation: slideIn 0.35s ease, pulse-ring 2s infinite; }
 </style>
 </head>
 <body>
 
-<!-- Overlay: ativar som -->
+<!-- Sound overlay -->
 <div id="sound-overlay">
   <span class="icon">🔔</span>
   <h2>Painel do Garçom</h2>
-  <p>Toque no botão abaixo para ativar as notificações sonoras quando uma mesa chamar.</p>
+  <p>Toque para ativar notificações sonoras e começar a monitorar as mesas.</p>
   <button onclick="ativarSom()">✅ Ativar e Começar</button>
 </div>
 
@@ -180,46 +221,85 @@
 <header class="balcao-header">
   <div class="header-left">
     <div id="header-logo" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-      <span style="font-size:1.4rem">🍺</span>
+      <span style="font-size:1.3rem">🍺</span>
     </div>
     <div>
       <h1 id="header-bar-name">Chamadas de Mesa</h1>
-      <div id="header-bar-sub" style="font-size:0.72rem;color:rgba(255,255,255,0.5);line-height:1;"></div>
+      <div class="sub" id="header-bar-sub"></div>
     </div>
     <span id="badge-count" class="badge-count hidden">0</span>
   </div>
   <div class="header-right">
-    <div style="text-align:right;">
-      <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);">atendidas hoje</div>
-      <div id="today-count" style="font-size:1.1rem;font-weight:800;color:var(--accent);line-height:1;">0</div>
+    <div class="stat-box">
+      <div class="val" id="today-count">0</div>
+      <div class="lbl">atendidas hoje</div>
     </div>
-    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);"></div>
+    <div class="vline"></div>
     <span id="status-dot" class="status-dot offline"></span>
-    <span id="status-label">Conectando...</span>
+    <span id="status-label" style="font-size:0.8rem;color:rgba(255,255,255,0.6);">Conectando...</span>
   </div>
 </header>
 
-<!-- Conteúdo -->
-<main class="content">
+<!-- Abas -->
+<nav class="tabs">
+  <button class="tab-btn active" id="tab-chamadas-btn" onclick="switchTab('chamadas')">
+    🔔 Chamadas <span id="tab-badge" class="badge-count hidden" style="background:#e74c3c;">0</span>
+  </button>
+  <button class="tab-btn" id="tab-mesas-btn" onclick="switchTab('mesas')">
+    🪑 Mesas
+  </button>
+</nav>
+
+<!-- Aba: Chamadas -->
+<div class="tab-panel active" id="tab-chamadas">
   <div id="empty-state" class="empty-state">
     <span class="icon">✅</span>
     <h2>Tudo tranquilo!</h2>
     <p>Nenhuma mesa chamando no momento.</p>
   </div>
-
   <div id="calls-grid"></div>
-</main>
+</div>
+
+<!-- Aba: Mesas -->
+<div class="tab-panel" id="tab-mesas">
+  <div class="mesas-toolbar">
+    <div class="legend">
+      <div class="legend-item"><span class="dot dot-livre"></span> Livre</div>
+      <div class="legend-item"><span class="dot dot-ocupada"></span> Ocupada</div>
+      <div class="legend-item"><span class="dot dot-chamando"></span> Chamando</div>
+    </div>
+    <div style="margin-left:auto;font-size:0.82rem;color:var(--text-muted);" id="occ-summary"></div>
+  </div>
+  <div id="mesas-grid-occ">
+    <div class="empty-state" style="grid-column:1/-1;">
+      <span class="icon">🪑</span>
+      <h2>Nenhuma mesa cadastrada</h2>
+      <p>Adicione mesas no painel admin.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de ação na mesa -->
+<div id="modal-overlay" class="hidden">
+  <div class="modal-box">
+    <span class="modal-icon" id="modal-icon">🪑</span>
+    <h3 id="modal-title">Mesa 1</h3>
+    <p id="modal-msg"></p>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
 
 <div id="toast-container"></div>
 
-<!-- Áudio de notificação (gerado por Web Audio API) -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
 let audioCtx = null;
 let activeCalls = [];
+let tableStatuses = {}; // tableId → { name, status, occupiedAt }
 let socket;
-let timeUpdater;
+let activeTab = 'chamadas';
 
+// ── Utilitários ──────────────────────────────────────────
 function toast(msg, type = '') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
@@ -228,125 +308,255 @@ function toast(msg, type = '') {
   setTimeout(() => el.remove(), 3000);
 }
 
+function timeAgo(ts) {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return `há ${diff}s`;
+  const m = Math.floor(diff / 60);
+  return `há ${m}min`;
+}
+
+function elapsedSince(isoStr) {
+  if (!isoStr) return '';
+  const diff = Math.floor((Date.now() - new Date(isoStr)) / 1000);
+  if (diff < 60) return `${diff}s`;
+  const m = Math.floor(diff / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}min`;
+  return `${m}min`;
+}
+
+// ── Áudio ────────────────────────────────────────────────
 function ativarSom() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  // Toca um beep silencioso para desbloquear o contexto de áudio
   playBeep(0.001);
   document.getElementById('sound-overlay').style.display = 'none';
   connectSocket();
 }
 
-function playBeep(volume = 0.4) {
+function playBeep(vol = 0.4) {
   if (!audioCtx) return;
   try {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
-    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.5);
-
-    // Toca dois beeps
-    setTimeout(() => {
-      const osc2 = audioCtx.createOscillator();
-      const gain2 = audioCtx.createGain();
-      osc2.connect(gain2);
-      gain2.connect(audioCtx.destination);
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
-      gain2.gain.setValueAtTime(volume, audioCtx.currentTime);
-      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-      osc2.start(audioCtx.currentTime);
-      osc2.stop(audioCtx.currentTime + 0.4);
-    }, 400);
-  } catch(e) { console.warn('Áudio:', e); }
+    [0, 400].forEach(delay => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      const t = audioCtx.currentTime + delay / 1000;
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.exponentialRampToValueAtTime(440, t + 0.3);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      osc.start(t); osc.stop(t + 0.45);
+    });
+  } catch(e) {}
 }
 
-function timeAgo(timestamp) {
-  const diff = Math.floor((Date.now() - timestamp) / 1000);
-  if (diff < 60) return `há ${diff}s`;
-  const mins = Math.floor(diff / 60);
-  return `há ${mins} min`;
+// ── Abas ─────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-chamadas').classList.toggle('active', tab === 'chamadas');
+  document.getElementById('tab-mesas').classList.toggle('active', tab === 'mesas');
+  document.getElementById('tab-chamadas-btn').classList.toggle('active', tab === 'chamadas');
+  document.getElementById('tab-mesas-btn').classList.toggle('active', tab === 'mesas');
 }
 
+// ── Badge de chamadas ────────────────────────────────────
 function updateBadge() {
-  const badge = document.getElementById('badge-count');
-  if (activeCalls.length > 0) {
-    badge.textContent = activeCalls.length;
-    badge.classList.remove('hidden');
-  } else {
-    badge.classList.add('hidden');
-  }
+  const n = activeCalls.length;
+  ['badge-count', 'tab-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = n;
+    el.classList.toggle('hidden', n === 0);
+  });
 }
 
+// ── Renderização das chamadas ────────────────────────────
 function renderCalls() {
   const grid = document.getElementById('calls-grid');
   const empty = document.getElementById('empty-state');
-
-  if (activeCalls.length === 0) {
-    empty.style.display = '';
-    grid.innerHTML = '';
-    updateBadge();
-    return;
-  }
-  empty.style.display = 'none';
+  empty.style.display = activeCalls.length === 0 ? '' : 'none';
   updateBadge();
 
-  // Atualiza apenas os tempos e adiciona novos cards
+  // Adiciona cards novos
   activeCalls.forEach(call => {
-    let card = document.getElementById(`card-${call.callId}`);
-    if (card) {
-      card.querySelector('.call-time').textContent = `Chamou ${timeAgo(call.timestamp)}`;
-      return;
-    }
-    card = document.createElement('div');
+    if (document.getElementById(`card-${call.callId}`)) return;
+    const card = document.createElement('div');
     card.className = 'call-card';
     card.id = `card-${call.callId}`;
     card.innerHTML = `
-      <div class="call-card-header">
-        <span class="call-bell">🔔</span>
-        <div class="call-info">
-          <div class="call-table-name">${call.tableName}</div>
-          <div class="call-time">Chamou ${timeAgo(call.timestamp)}</div>
-        </div>
+      <span class="call-bell">🔔</span>
+      <div class="call-info">
+        <div class="call-name">${call.tableName}</div>
+        <div class="call-time" data-ts="${call.timestamp}">Chamou ${timeAgo(call.timestamp)}</div>
       </div>
-      <button class="btn-atender" onclick="atender('${call.tableId}', '${call.callId}', this)">
-        ✅ Marcar como Atendido
-      </button>
-    `;
+      <button class="btn-atender" onclick="atender('${call.tableId}','${call.callId}',this)">
+        ✅ Atendido
+      </button>`;
     grid.prepend(card);
   });
 
-  // Remove cards que não existem mais
-  Array.from(grid.children).forEach(card => {
-    const callId = card.id.replace('card-', '');
-    if (!activeCalls.find(c => c.callId === callId)) {
-      card.remove();
-    }
+  // Remove cards obsoletos
+  Array.from(grid.querySelectorAll('.call-card')).forEach(el => {
+    const cid = el.id.replace('card-','');
+    if (!activeCalls.find(c => c.callId === cid)) el.remove();
   });
 }
 
 function atender(tableId, callId, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Atendendo...';
+  btn.disabled = true; btn.textContent = '⏳';
   socket.emit('call:attend', { tableId });
 }
 
-function onCallAttended(tableId, callId) {
+function removeCallCard(callId) {
   const card = document.getElementById(`card-${callId}`);
-  if (card) {
-    card.classList.add('attended');
-    setTimeout(() => card.remove(), 450);
-  }
+  if (!card) return;
+  card.classList.add('removing');
+  setTimeout(() => card.remove(), 380);
   activeCalls = activeCalls.filter(c => c.callId !== callId);
-  setTimeout(renderCalls, 450);
+  setTimeout(renderCalls, 400);
 }
 
+// ── Grid de mesas ────────────────────────────────────────
+function renderMesasGrid() {
+  const grid = document.getElementById('mesas-grid-occ');
+  const tables = Object.values(tableStatuses);
+
+  if (tables.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <span class="icon">🪑</span><h2>Nenhuma mesa cadastrada</h2>
+      <p>Adicione mesas no painel admin.</p></div>`;
+    document.getElementById('occ-summary').textContent = '';
+    return;
+  }
+
+  const livre    = tables.filter(t => t.status === 'livre').length;
+  const ocupada  = tables.filter(t => t.status === 'ocupada').length;
+  const chamando = tables.filter(t => t.status === 'chamando').length;
+  document.getElementById('occ-summary').textContent =
+    `${livre} livre${livre!==1?'s':''} · ${ocupada} ocupada${ocupada!==1?'s':''} · ${chamando} chamando`;
+
+  grid.innerHTML = '';
+  const sorted = tables.slice().sort((a,b) => {
+    const order = { chamando: 0, ocupada: 1, livre: 2 };
+    return (order[a.status]||2) - (order[b.status]||2) || a.name.localeCompare(b.name);
+  });
+
+  sorted.forEach(t => {
+    const card = document.createElement('div');
+    card.className = `mesa-occ-card ${t.status}`;
+    card.id = `occ-${t.tableId}`;
+
+    const icons = { livre: '🟢', ocupada: '🟡', chamando: '🔴' };
+    const labels = { livre: 'Livre', ocupada: 'Ocupada', chamando: 'Chamando' };
+    const badgeCls = { livre: 'badge-livre', ocupada: 'badge-ocupada', chamando: 'badge-chamando' };
+
+    let timeEl = '';
+    if (t.status !== 'livre' && t.occupiedAt) {
+      timeEl = `<div class="mesa-time">⏱ ${elapsedSince(t.occupiedAt)}</div>`;
+    }
+
+    let actions = '';
+    if (t.status === 'livre') {
+      actions = `<button class="btn-success" onclick="abrirMesa('${t.tableId}','${t.name}')">▶ Abrir</button>`;
+    } else if (t.status === 'ocupada') {
+      actions = `<button class="btn-danger" onclick="fecharMesa('${t.tableId}','${t.name}')">✕ Liberar</button>`;
+    } else if (t.status === 'chamando') {
+      actions = `
+        <button class="btn-success" style="flex:1" onclick="atenderDireto('${t.tableId}')">✅</button>
+        <button class="btn-danger" style="flex:1" onclick="fecharMesa('${t.tableId}','${t.name}')">✕</button>`;
+    }
+
+    card.innerHTML = `
+      <span class="mesa-status-icon">${icons[t.status]}</span>
+      <div class="mesa-occ-name">${t.name}</div>
+      <span class="mesa-status-badge ${badgeCls[t.status]}">${labels[t.status]}</span>
+      ${timeEl}
+      <div class="mesa-occ-actions">${actions}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function updateMesaCard(tableId) {
+  const t = tableStatuses[tableId];
+  if (!t) return;
+  const card = document.getElementById(`occ-${tableId}`);
+  if (!card) { renderMesasGrid(); return; }
+  // Re-renderiza o card individualmente
+  const icons = { livre: '🟢', ocupada: '🟡', chamando: '🔴' };
+  const labels = { livre: 'Livre', ocupada: 'Ocupada', chamando: 'Chamando' };
+  const badgeCls = { livre: 'badge-livre', ocupada: 'badge-ocupada', chamando: 'badge-chamando' };
+  card.className = `mesa-occ-card ${t.status}`;
+
+  let timeEl = '';
+  if (t.status !== 'livre' && t.occupiedAt) {
+    timeEl = `<div class="mesa-time">⏱ ${elapsedSince(t.occupiedAt)}</div>`;
+  }
+  let actions = '';
+  if (t.status === 'livre') {
+    actions = `<button class="btn-success" onclick="abrirMesa('${t.tableId}','${t.name}')">▶ Abrir</button>`;
+  } else if (t.status === 'ocupada') {
+    actions = `<button class="btn-danger" onclick="fecharMesa('${t.tableId}','${t.name}')">✕ Liberar</button>`;
+  } else {
+    actions = `
+      <button class="btn-success" style="flex:1" onclick="atenderDireto('${t.tableId}')">✅</button>
+      <button class="btn-danger" style="flex:1" onclick="fecharMesa('${t.tableId}','${t.name}')">✕</button>`;
+  }
+  card.innerHTML = `
+    <span class="mesa-status-icon">${icons[t.status]}</span>
+    <div class="mesa-occ-name">${t.name}</div>
+    <span class="mesa-status-badge ${badgeCls[t.status]}">${labels[t.status]}</span>
+    ${timeEl}
+    <div class="mesa-occ-actions">${actions}</div>`;
+
+  // Atualiza resumo
+  const tables = Object.values(tableStatuses);
+  const livre = tables.filter(t => t.status === 'livre').length;
+  const ocu   = tables.filter(t => t.status === 'ocupada').length;
+  const cham  = tables.filter(t => t.status === 'chamando').length;
+  document.getElementById('occ-summary').textContent =
+    `${livre} livre${livre!==1?'s':''} · ${ocu} ocupada${ocu!==1?'s':''} · ${cham} chamando`;
+}
+
+// ── Ações de mesa ────────────────────────────────────────
+function abrirMesa(tableId, name) {
+  socket.emit('table:open', { tableId });
+  toast(`${name} marcada como ocupada.`);
+}
+
+function fecharMesa(tableId, name) {
+  showModal({
+    icon: '🟢', title: `Liberar ${name}`,
+    msg: 'Confirma que os clientes saíram e a mesa está livre?',
+    btns: [
+      { label: 'Cancelar', cls: 'btn-outline', action: closeModal },
+      { label: 'Liberar Mesa', cls: 'btn-danger', action: () => { socket.emit('table:close', { tableId }); closeModal(); toast(`${name} liberada.`); } }
+    ]
+  });
+}
+
+function atenderDireto(tableId) {
+  const call = activeCalls.find(c => c.tableId === tableId);
+  if (call) socket.emit('call:attend', { tableId });
+}
+
+// ── Modal ────────────────────────────────────────────────
+function showModal({ icon, title, msg, btns }) {
+  document.getElementById('modal-icon').textContent = icon;
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-msg').textContent = msg;
+  const btnEl = document.getElementById('modal-btns');
+  btnEl.innerHTML = '';
+  btns.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = b.cls; btn.textContent = b.label;
+    btn.onclick = b.action;
+    btnEl.appendChild(btn);
+  });
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+
+// ── Socket ───────────────────────────────────────────────
 function connectSocket() {
   socket = io({ transports: ['websocket', 'polling'] });
 
@@ -356,40 +566,54 @@ function connectSocket() {
     socket.emit('join:balcao');
   });
 
-  socket.on('stats:update', ({ todayCount }) => {
-    document.getElementById('today-count').textContent = todayCount;
-  });
-
   socket.on('disconnect', () => {
     document.getElementById('status-dot').className = 'status-dot offline';
     document.getElementById('status-label').textContent = 'Desconectado';
-    toast('Conexão perdida. Tentando reconectar...', 'error');
+    toast('Conexão perdida. Reconectando...', 'error');
   });
 
-  socket.on('init:balcao', ({ pendingCalls, todayCount }) => {
+  socket.on('init:balcao', ({ pendingCalls, todayCount, tableStatuses: ts }) => {
     activeCalls = pendingCalls;
     if (todayCount !== undefined) document.getElementById('today-count').textContent = todayCount;
+    tableStatuses = {};
+    (ts || []).forEach(t => { tableStatuses[t.tableId] = t; });
     renderCalls();
+    renderMesasGrid();
   });
 
   socket.on('table:calling', (call) => {
-    if (!activeCalls.find(c => c.callId === call.callId)) {
-      activeCalls.push(call);
-    }
+    if (!activeCalls.find(c => c.callId === call.callId)) activeCalls.push(call);
     playBeep();
     renderCalls();
-    toast(`🔔 ${call.tableName} está chamando!`, '');
-
-    // Vibração se disponível
+    toast(`🔔 ${call.tableName} está chamando!`);
     if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300]);
+    // Muda para aba de chamadas automaticamente
+    switchTab('chamadas');
   });
 
   socket.on('call:attended', ({ tableId, callId }) => {
-    onCallAttended(tableId, callId);
+    if (callId) removeCallCard(callId);
+    else {
+      // Mesa liberada diretamente
+      activeCalls = activeCalls.filter(c => c.tableId !== tableId);
+      renderCalls();
+    }
+  });
+
+  socket.on('table:status-changed', ({ tableId, status, occupiedAt }) => {
+    if (tableStatuses[tableId]) {
+      tableStatuses[tableId].status = status;
+      tableStatuses[tableId].occupiedAt = occupiedAt;
+    }
+    updateMesaCard(tableId);
+  });
+
+  socket.on('stats:update', ({ todayCount }) => {
+    document.getElementById('today-count').textContent = todayCount;
   });
 }
 
-// Carrega identidade do bar
+// ── Identidade do bar ────────────────────────────────────
 (async () => {
   try {
     const res = await fetch('/api/settings');
@@ -399,9 +623,7 @@ function connectSocket() {
       document.getElementById('header-bar-name').textContent = s.barName;
       document.title = `Balcão — ${s.barName}`;
     }
-    if (s.tagline) {
-      document.getElementById('header-bar-sub').textContent = s.tagline;
-    }
+    if (s.tagline) document.getElementById('header-bar-sub').textContent = s.tagline;
     if (s.logo?.url) {
       document.getElementById('header-logo').innerHTML =
         `<img src="${s.logo.url}" alt="Logo" style="width:100%;height:100%;object-fit:cover;">`;
@@ -409,11 +631,17 @@ function connectSocket() {
   } catch {}
 })();
 
-// Atualiza os tempos relativos a cada 30 segundos
-timeUpdater = setInterval(() => {
-  document.querySelectorAll('.call-time').forEach((el, i) => {
-    if (activeCalls[i]) {
-      el.textContent = `Chamou ${timeAgo(activeCalls[i].timestamp)}`;
+// ── Atualiza tempos relativos a cada 30s ─────────────────
+setInterval(() => {
+  document.querySelectorAll('.call-time[data-ts]').forEach(el => {
+    el.textContent = `Chamou ${timeAgo(Number(el.dataset.ts))}`;
+  });
+  // Atualiza tempos de ocupação nos cards
+  Object.values(tableStatuses).forEach(t => {
+    if (t.status !== 'livre' && t.occupiedAt) {
+      const card = document.getElementById(`occ-${t.tableId}`);
+      const timeEl = card?.querySelector('.mesa-time');
+      if (timeEl) timeEl.textContent = `⏱ ${elapsedSince(t.occupiedAt)}`;
     }
   });
 }, 30000);
