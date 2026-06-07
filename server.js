@@ -255,10 +255,67 @@ app.get('/api/qrcode/all/print', (req, res) => {
 
 app.get('/api/historico', adminAuth, (req, res) => {
   const db = readDB();
-  const today = new Date().toISOString().slice(0, 10);
-  const todayLog = (db.callHistory || []).filter(h => h.date === today);
-  const total = (db.callHistory || []).length;
-  res.json({ today: todayLog.length, total, recent: todayLog.slice(-20).reverse() });
+  const history = db.callHistory || [];
+
+  const { date, table: tableFilter, limit: limitParam } = req.query;
+  const limit = Math.min(parseInt(limitParam) || 200, 500);
+
+  let filtered = history;
+  if (date) filtered = filtered.filter(h => h.date === date);
+  if (tableFilter) filtered = filtered.filter(h => h.tableId === tableFilter || h.tableName?.toLowerCase().includes(tableFilter.toLowerCase()));
+
+  // Estatísticas do conjunto filtrado
+  const withDuration = filtered.filter(h => h.attendedAt && h.calledAt);
+  const durations = withDuration.map(h => (new Date(h.attendedAt) - new Date(h.calledAt)) / 1000);
+  const avgSeconds = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+  const maxSeconds = durations.length ? Math.round(Math.max(...durations)) : null;
+
+  // Mesa mais chamada
+  const countByTable = {};
+  filtered.forEach(h => { countByTable[h.tableName] = (countByTable[h.tableName] || 0) + 1; });
+  const busiestTable = Object.entries(countByTable).sort((a, b) => b[1] - a[1])[0] || null;
+
+  // Chamadas por hora (para o gráfico)
+  const byHour = Array(24).fill(0);
+  filtered.forEach(h => {
+    const hour = new Date(h.calledAt).getHours();
+    byHour[hour]++;
+  });
+
+  // Datas disponíveis (para o seletor)
+  const dates = [...new Set(history.map(h => h.date))].sort().reverse();
+
+  // Retorna mais recentes primeiro
+  const records = filtered.slice().reverse().slice(0, limit).map(h => ({
+    ...h,
+    durationSeconds: h.attendedAt && h.calledAt
+      ? Math.round((new Date(h.attendedAt) - new Date(h.calledAt)) / 1000)
+      : null
+  }));
+
+  res.json({
+    total: filtered.length,
+    totalAllTime: history.length,
+    avgSeconds,
+    maxSeconds,
+    busiestTable: busiestTable ? { name: busiestTable[0], count: busiestTable[1] } : null,
+    byHour,
+    dates,
+    records
+  });
+});
+
+app.delete('/api/historico', adminAuth, (req, res) => {
+  const { date } = req.query;
+  const db = readDB();
+  if (!db.callHistory) { db.callHistory = []; }
+  if (date) {
+    db.callHistory = db.callHistory.filter(h => h.date !== date);
+  } else {
+    db.callHistory = [];
+  }
+  writeDB(db);
+  res.json({ ok: true });
 });
 
 // ─── API: Cardápio ────────────────────────────────────────────────────────────

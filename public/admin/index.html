@@ -189,6 +189,85 @@
   .empty-mesas { text-align: center; color: var(--text-muted); padding: 2rem; }
   .empty-mesas .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
 
+  /* ─── Histórico ──────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    text-align: center;
+    border-top: 3px solid var(--accent);
+  }
+  .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
+  .stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.3; }
+
+  .historico-filters {
+    display: flex; gap: 0.65rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+    align-items: center;
+  }
+  .historico-filters select,
+  .historico-filters input { width: auto; flex: 1; min-width: 120px; font-size: 0.88rem; padding: 0.5rem 0.7rem; }
+  .historico-filters button { flex-shrink: 0; font-size: 0.82rem; padding: 0.5rem 0.9rem; }
+
+  /* Gráfico de barras por hora */
+  .hour-chart {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .hour-chart-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 60px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
+  .bar-hour { font-size: 0.55rem; color: var(--text-muted); }
+
+  /* Tabela do histórico */
+  .historico-table-wrap {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .historico-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .historico-table th {
+    background: var(--primary); color: #fff;
+    padding: 0.65rem 0.75rem; text-align: left;
+    font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+  }
+  .historico-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .historico-table tr:last-child td { border-bottom: none; }
+  .historico-table tr:hover td { background: #f9f9fb; }
+  .duration-chip {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .dur-fast  { background: #d5f5e3; color: #1e8449; }
+  .dur-mid   { background: #fdebd0; color: #935116; }
+  .dur-slow  { background: #fadbd8; color: #922b21; }
+  .empty-hist { text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; font-size: 0.9rem; }
+
+  .hist-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 0; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .hist-footer small { color: var(--text-muted); font-size: 0.8rem; }
+
   /* ─── Identidade do bar ──────────────────────────────── */
   .identity-card {
     background: #fff;
@@ -432,6 +511,79 @@
       </div>
     </section>
 
+    <!-- ─── Histórico de Chamadas ─── -->
+    <section class="section">
+      <div class="section-title">📊 Histórico de Chamadas</div>
+
+      <!-- Cards de estatísticas -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-hoje">—</div>
+          <div class="stat-label">Chamadas hoje</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Total registradas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-avg">—</div>
+          <div class="stat-label">Tempo médio de atend.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-max">—</div>
+          <div class="stat-label">Maior espera</div>
+        </div>
+        <div class="stat-card" id="stat-mesa-card">
+          <div class="stat-value" id="stat-mesa">—</div>
+          <div class="stat-label">Mesa mais ativa</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="historico-filters">
+        <select id="hist-filter-date" onchange="carregarHistorico()">
+          <option value="">Todas as datas</option>
+        </select>
+        <input type="text" id="hist-filter-mesa" placeholder="Filtrar por mesa..." oninput="carregarHistorico()" style="max-width:180px;">
+        <button class="btn-outline" onclick="carregarHistorico()">🔄 Atualizar</button>
+        <button class="btn-danger" id="btn-limpar-hist" onclick="limparHistorico()" style="margin-left:auto;">🗑️ Limpar</button>
+      </div>
+
+      <!-- Gráfico de chamadas por hora -->
+      <div class="hour-chart hidden" id="hour-chart">
+        <div class="hour-chart-title">Chamadas por hora do dia</div>
+        <div class="bars" id="hour-bars"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:0.65rem;color:var(--text-muted);">00h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">06h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">12h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">18h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">23h</span>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="historico-table-wrap">
+        <table class="historico-table">
+          <thead>
+            <tr>
+              <th>Mesa</th>
+              <th>Chamada às</th>
+              <th>Atendida às</th>
+              <th>Espera</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="historico-tbody">
+            <tr><td colspan="5" class="empty-hist">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hist-footer">
+        <small id="hist-showing"></small>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -499,6 +651,7 @@ function showPainel() {
   carregarMesas();
   carregarMenu();
   carregarIdentidade();
+  carregarHistorico();
 }
 
 // ─── Identidade do Bar ─────────────────────────────────
@@ -760,6 +913,131 @@ async function removerMenu() {
     document.getElementById('file-input').value = '';
     document.getElementById('file-name-label').textContent = '';
     document.getElementById('btn-upload').style.display = 'none';
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+// ─── Histórico ─────────────────────────────────────────
+let lastHistData = null;
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined) return '—';
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}min ${s}s` : `${m}min`;
+}
+
+function durClass(seconds) {
+  if (seconds === null) return '';
+  if (seconds <= 60) return 'dur-fast';
+  if (seconds <= 180) return 'dur-mid';
+  return 'dur-slow';
+}
+
+async function carregarHistorico() {
+  const date = document.getElementById('hist-filter-date').value;
+  const mesa = document.getElementById('hist-filter-mesa').value.trim();
+
+  const params = new URLSearchParams();
+  if (date) params.set('date', date);
+  if (mesa) params.set('table', mesa);
+  params.set('limit', '200');
+
+  try {
+    const res = await fetch(`/api/historico?${params}`, { headers: { 'x-admin-token': adminToken } });
+    if (!res.ok) return;
+    const data = await res.json();
+    lastHistData = data;
+
+    // Preenche seletor de datas
+    const sel = document.getElementById('hist-filter-date');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todas as datas</option>';
+    data.dates.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = fmtDate(d) + (d === new Date().toISOString().slice(0,10) ? ' (hoje)' : '');
+      if (d === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    // Stats
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayTotal = data.dates.includes(todayStr) ? data.records.filter(r => r.date === todayStr).length : 0;
+    document.getElementById('stat-hoje').textContent = date ? data.total : todayTotal;
+    document.getElementById('stat-total').textContent = data.totalAllTime;
+    document.getElementById('stat-avg').textContent = data.avgSeconds !== null ? fmtDuration(data.avgSeconds) : '—';
+    document.getElementById('stat-max').textContent = data.maxSeconds !== null ? fmtDuration(data.maxSeconds) : '—';
+    if (data.busiestTable) {
+      document.getElementById('stat-mesa').textContent = data.busiestTable.name;
+      document.getElementById('stat-mesa-card').querySelector('.stat-label').textContent =
+        `Mesa mais ativa (${data.busiestTable.count}×)`;
+    } else {
+      document.getElementById('stat-mesa').textContent = '—';
+    }
+
+    // Gráfico por hora
+    const chart = document.getElementById('hour-chart');
+    const hasData = data.byHour.some(v => v > 0);
+    if (hasData) {
+      chart.classList.remove('hidden');
+      const maxVal = Math.max(...data.byHour, 1);
+      const barsEl = document.getElementById('hour-bars');
+      barsEl.innerHTML = data.byHour.map((v, h) => `
+        <div class="bar-wrap" title="${h}h: ${v} chamada${v !== 1 ? 's' : ''}">
+          <div class="bar" style="height:${Math.round((v/maxVal)*100)}%;background:${v === Math.max(...data.byHour) ? 'var(--accent)' : '#c5d5e8'};"></div>
+        </div>`).join('');
+    } else {
+      chart.classList.add('hidden');
+    }
+
+    // Tabela
+    const tbody = document.getElementById('historico-tbody');
+    if (data.records.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-hist">📭 Nenhuma chamada encontrada para o filtro selecionado.</td></tr>`;
+      document.getElementById('hist-showing').textContent = '';
+    } else {
+      tbody.innerHTML = data.records.map(r => `
+        <tr>
+          <td><strong>${r.tableName || '—'}</strong></td>
+          <td>${fmtTime(r.calledAt)}</td>
+          <td>${fmtTime(r.attendedAt)}</td>
+          <td>${r.durationSeconds !== null
+            ? `<span class="duration-chip ${durClass(r.durationSeconds)}">${fmtDuration(r.durationSeconds)}</span>`
+            : '<span style="color:var(--text-muted)">—</span>'}</td>
+          <td style="color:var(--text-muted);font-size:0.8rem;">${fmtDate(r.date)}</td>
+        </tr>`).join('');
+      document.getElementById('hist-showing').textContent =
+        `Exibindo ${data.records.length} de ${data.total} registro${data.total !== 1 ? 's' : ''}`;
+    }
+
+  } catch (e) { toast('Erro ao carregar histórico.', 'error'); }
+}
+
+async function limparHistorico() {
+  const date = document.getElementById('hist-filter-date').value;
+  const msg = date
+    ? `Apagar todo o histórico de ${fmtDate(date)}?`
+    : 'Apagar TODO o histórico de chamadas? Esta ação não pode ser desfeita.';
+  if (!confirm(msg)) return;
+
+  const params = date ? `?date=${date}` : '';
+  try {
+    const res = await fetch(`/api/historico${params}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao limpar histórico.', 'error'); return; }
+    toast('Histórico apagado.', '');
+    carregarHistorico();
   } catch { toast('Erro de conexão.', 'error'); }
 }
 
