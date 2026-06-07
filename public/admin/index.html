@@ -348,6 +348,52 @@
   .badge-livre    { background: #d5f5e3; color: #1e8449; }
   .badge-ocupada  { background: #fdebd0; color: #935116; }
   .badge-chamando { background: #fadbd8; color: #922b21; }
+
+  /* ─── Cardápio Digital ──────────────────────────────── */
+  .cat-list { display: flex; flex-direction: column; gap: 0.85rem; }
+  .cat-block {
+    background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .cat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1.1rem; background: #f8f8fb;
+    border-bottom: 1px solid var(--border); user-select: none;
+  }
+  .cat-name { font-size: 1rem; font-weight: 700; color: var(--primary); }
+  .cat-body { padding: 0.65rem; }
+  .item-row {
+    display: flex; align-items: center; gap: 0.65rem;
+    padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .item-row:last-of-type { border-bottom: none; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name-col { font-weight: 600; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-desc-col { font-size: 0.76rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-price-col { font-weight: 700; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+  .item-btns { display: flex; gap: 0.3rem; flex-shrink: 0; }
+  .item-btns button { font-size: 0.72rem; padding: 0.28rem 0.5rem; }
+  .toggle-switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0; border-radius: 99px;
+    background: #ccc; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle-track::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--success); }
+  .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px); }
+  .add-item-form {
+    display: none; padding: 0.75rem 0.5rem 0.5rem;
+    border-top: 2px dashed var(--border); margin-top: 0.5rem;
+    flex-direction: column; gap: 0.55rem;
+  }
+  .add-item-form.open { display: flex; }
+  .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .empty-cat { text-align: center; color: var(--text-muted); padding: 1.25rem; font-size: 0.88rem; }
 </style>
 </head>
 <body>
@@ -519,6 +565,19 @@
       </div>
     </section>
 
+    <!-- ─── Cardápio Digital ─── -->
+    <section class="section">
+      <div class="section-title">🍽️ Cardápio Digital</div>
+
+      <div class="form-row" style="margin-bottom:1rem;">
+        <input type="text" id="cat-nome-input" placeholder="Nome da categoria (ex: Bebidas, Lanches...)" maxlength="50"
+          onkeydown="if(event.key==='Enter')criarCategoria()">
+        <button class="btn-accent" onclick="criarCategoria()">+ Categoria</button>
+      </div>
+
+      <div id="cat-list" class="cat-list"></div>
+    </section>
+
     <!-- ─── Histórico de Chamadas ─── -->
     <section class="section">
       <div class="section-title">📊 Histórico de Chamadas</div>
@@ -660,6 +719,7 @@ function showPainel() {
   carregarMenu();
   carregarIdentidade();
   carregarHistorico();
+  carregarCardapioDigital();
 }
 
 // ─── Identidade do Bar ─────────────────────────────────
@@ -1079,6 +1139,205 @@ async function limparHistorico() {
 function copiarLink(elId, url) {
   const text = url || document.getElementById(elId)?.href;
   navigator.clipboard.writeText(text).then(() => toast('Link copiado!', 'success')).catch(() => toast('Não foi possível copiar.', 'error'));
+}
+
+// ─── Cardápio Digital ──────────────────────────────────
+let categorias = [];
+let itensCardapio = [];
+
+async function carregarCardapioDigital() {
+  try {
+    const [catRes, itensRes] = await Promise.all([
+      fetch('/api/cardapio/categorias', { headers: { 'x-admin-token': adminToken } }),
+      fetch('/api/cardapio/itens', { headers: { 'x-admin-token': adminToken } })
+    ]);
+    categorias = catRes.ok ? await catRes.json() : [];
+    itensCardapio = itensRes.ok ? await itensRes.json() : [];
+    renderCardapioDigital();
+  } catch { toast('Erro ao carregar cardápio digital.', 'error'); }
+}
+
+function renderCardapioDigital() {
+  const list = document.getElementById('cat-list');
+  if (categorias.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:2rem;">
+      <span style="font-size:2rem;display:block;margin-bottom:0.5rem;">🍽️</span>
+      Nenhuma categoria. Crie a primeira acima.
+    </div>`;
+    return;
+  }
+  list.innerHTML = '';
+  categorias.forEach(cat => {
+    const catItens = itensCardapio.filter(i => i.categoryId === cat.id);
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    block.id = `cat-block-${cat.id}`;
+    const itemsHtml = catItens.length
+      ? catItens.map(item => itemRowHtml(item)).join('')
+      : `<div class="empty-cat">Nenhum item nesta categoria ainda.</div>`;
+    const safeName = cat.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    block.innerHTML = `
+      <div class="cat-header">
+        <span class="cat-name">📂 ${cat.name}</span>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:0.78rem;color:var(--text-muted);">${catItens.length} item${catItens.length !== 1 ? 's' : ''}</span>
+          <button class="btn-danger" style="font-size:0.72rem;padding:0.28rem 0.6rem;"
+            onclick="deletarCategoria('${cat.id}','${safeName}')">🗑️ Excluir</button>
+        </div>
+      </div>
+      <div class="cat-body" id="cat-body-${cat.id}">
+        <div id="items-of-${cat.id}">${itemsHtml}</div>
+        <div class="add-item-form" id="add-form-${cat.id}">
+          <div class="form-2col">
+            <input type="text" id="item-name-${cat.id}" placeholder="Nome do item *" maxlength="80">
+            <input type="text" id="item-price-${cat.id}" placeholder="Preço (ex: 12,50)" inputmode="decimal">
+          </div>
+          <input type="text" id="item-desc-${cat.id}" placeholder="Descrição opcional" maxlength="200">
+          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;">
+              <input type="checkbox" id="item-avail-${cat.id}" checked> Disponível
+            </label>
+            <button class="btn-accent" onclick="criarItem('${cat.id}')" style="flex:1;min-width:120px;">✅ Adicionar</button>
+            <button class="btn-outline" onclick="esconderFormItem('${cat.id}')" style="font-size:0.82rem;padding:0.4rem 0.8rem;">Cancelar</button>
+          </div>
+        </div>
+        <button class="btn-outline" id="btn-add-item-${cat.id}" onclick="mostrarFormItem('${cat.id}')"
+          style="width:100%;margin-top:0.6rem;font-size:0.82rem;padding:0.5rem;">
+          + Adicionar Item nesta Categoria
+        </button>
+      </div>`;
+    list.appendChild(block);
+  });
+}
+
+function itemRowHtml(item) {
+  const price = item.price ? `R$ ${item.price.toFixed(2).replace('.', ',')}` : '—';
+  return `
+    <div class="item-row" id="item-row-${item.id}">
+      <label class="toggle-switch" title="${item.available ? 'Disponível — clique para desativar' : 'Indisponível — clique para ativar'}">
+        <input type="checkbox" ${item.available ? 'checked' : ''} onchange="toggleItem('${item.id}',this.checked)">
+        <span class="toggle-track"></span>
+      </label>
+      <div class="item-info">
+        <div class="item-name-col">${item.name}</div>
+        ${item.description ? `<div class="item-desc-col">${item.description}</div>` : ''}
+      </div>
+      <span class="item-price-col">${price}</span>
+      <div class="item-btns">
+        <button class="btn-outline" onclick="editarItem('${item.id}')">✏️</button>
+        <button class="btn-danger" onclick="deletarItem('${item.id}')">🗑️</button>
+      </div>
+    </div>`;
+}
+
+function mostrarFormItem(catId) {
+  document.getElementById(`add-form-${catId}`).classList.add('open');
+  document.getElementById(`btn-add-item-${catId}`).style.display = 'none';
+  document.getElementById(`item-name-${catId}`).focus();
+}
+
+function esconderFormItem(catId) {
+  document.getElementById(`add-form-${catId}`).classList.remove('open');
+  document.getElementById(`btn-add-item-${catId}`).style.display = '';
+  [`item-name-${catId}`, `item-price-${catId}`, `item-desc-${catId}`].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const avail = document.getElementById(`item-avail-${catId}`);
+  if (avail) avail.checked = true;
+}
+
+async function criarCategoria() {
+  const input = document.getElementById('cat-nome-input');
+  const name = input.value.trim();
+  if (!name) { toast('Digite o nome da categoria.', 'error'); return; }
+  try {
+    const res = await fetch('/api/cardapio/categorias', {
+      method: 'POST', headers: authHeader(), body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao criar categoria.', 'error'); return; }
+    input.value = '';
+    toast(`✅ Categoria "${data.name}" criada!`, 'success');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function deletarCategoria(catId, name) {
+  if (!confirm(`Excluir a categoria "${name}" e todos os seus itens?`)) return;
+  try {
+    const res = await fetch(`/api/cardapio/categorias/${catId}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao excluir categoria.', 'error'); return; }
+    toast(`Categoria "${name}" excluída.`, '');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function criarItem(catId) {
+  const name = document.getElementById(`item-name-${catId}`).value.trim();
+  const priceRaw = document.getElementById(`item-price-${catId}`).value.trim().replace(',', '.');
+  const description = document.getElementById(`item-desc-${catId}`).value.trim();
+  const available = document.getElementById(`item-avail-${catId}`).checked;
+  if (!name) { toast('Digite o nome do item.', 'error'); return; }
+  const price = priceRaw ? parseFloat(priceRaw) : 0;
+  if (priceRaw && isNaN(price)) { toast('Preço inválido. Use vírgula como separador (ex: 12,50).', 'error'); return; }
+  try {
+    const res = await fetch('/api/cardapio/itens', {
+      method: 'POST', headers: authHeader(),
+      body: JSON.stringify({ categoryId: catId, name, description, price, available })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao criar item.', 'error'); return; }
+    toast(`✅ "${data.name}" adicionado!`, 'success');
+    esconderFormItem(catId);
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function toggleItem(itemId, available) {
+  try {
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, {
+      method: 'PUT', headers: authHeader(), body: JSON.stringify({ available })
+    });
+    if (!res.ok) { toast('Erro ao atualizar.', 'error'); await carregarCardapioDigital(); return; }
+    const idx = itensCardapio.findIndex(i => i.id === itemId);
+    if (idx !== -1) itensCardapio[idx].available = available;
+    toast(available ? 'Item disponível.' : 'Item indisponível.', '');
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function editarItem(itemId) {
+  const item = itensCardapio.find(i => i.id === itemId);
+  if (!item) return;
+  const name = prompt('Nome do item:', item.name);
+  if (name === null) return;
+  if (!name.trim()) { toast('Nome obrigatório.', 'error'); return; }
+  const priceStr = prompt('Preço (R$) — use vírgula (ex: 12,50):', item.price ? item.price.toFixed(2).replace('.', ',') : '');
+  if (priceStr === null) return;
+  const description = prompt('Descrição (opcional):', item.description || '');
+  if (description === null) return;
+  const price = priceStr.trim() ? parseFloat(priceStr.trim().replace(',', '.')) : 0;
+  if (priceStr.trim() && isNaN(price)) { toast('Preço inválido.', 'error'); return; }
+  try {
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, {
+      method: 'PUT', headers: authHeader(),
+      body: JSON.stringify({ name: name.trim(), description: description.trim(), price, available: item.available })
+    });
+    if (!res.ok) { toast('Erro ao atualizar item.', 'error'); return; }
+    toast('✅ Item atualizado!', 'success');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function deletarItem(itemId) {
+  const item = itensCardapio.find(i => i.id === itemId);
+  if (!confirm(`Excluir "${item?.name || 'este item'}"?`)) return;
+  try {
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao excluir.', 'error'); return; }
+    toast('Item excluído.', '');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
 }
 
 // ─── Auto-login ─────────────────────────────────────────

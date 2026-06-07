@@ -445,6 +445,157 @@ app.post('/api/mesas/:tableId/status', adminAuth, (req, res) => {
   res.json({ tableId: table.id, status: table.status });
 });
 
+// ─── API: Cardápio Digital — Categorias ───────────────────────────────────────
+
+app.get('/api/cardapio/categorias', (req, res) => {
+  const db = readDB();
+  res.json(db.menuCategories || []);
+});
+
+app.post('/api/cardapio/categorias', adminAuth, (req, res) => {
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Nome obrigatório' });
+  const db = readDB();
+  if (!db.menuCategories) db.menuCategories = [];
+  const cat = { id: uuidv4(), name: name.trim(), order: db.menuCategories.length, createdAt: new Date().toISOString() };
+  db.menuCategories.push(cat);
+  writeDB(db);
+  res.status(201).json(cat);
+});
+
+app.delete('/api/cardapio/categorias/:catId', adminAuth, (req, res) => {
+  const db = readDB();
+  const idx = (db.menuCategories || []).findIndex(c => c.id === req.params.catId);
+  if (idx === -1) return res.status(404).json({ error: 'Categoria não encontrada' });
+  db.menuCategories.splice(idx, 1);
+  // Remove itens da categoria
+  db.menuItems = (db.menuItems || []).filter(i => i.categoryId !== req.params.catId);
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+// ─── API: Cardápio Digital — Itens ────────────────────────────────────────────
+
+app.get('/api/cardapio/itens', (req, res) => {
+  const db = readDB();
+  res.json(db.menuItems || []);
+});
+
+app.post('/api/cardapio/itens', adminAuth, (req, res) => {
+  const { categoryId, name, description, price } = req.body;
+  if (!categoryId || !name?.trim()) return res.status(400).json({ error: 'categoryId e name são obrigatórios' });
+  const db = readDB();
+  if (!(db.menuCategories || []).find(c => c.id === categoryId))
+    return res.status(400).json({ error: 'Categoria não encontrada' });
+  if (!db.menuItems) db.menuItems = [];
+  const item = {
+    id: uuidv4(), categoryId, name: name.trim(),
+    description: description?.trim() || '',
+    price: parseFloat(price) || 0,
+    available: true,
+    createdAt: new Date().toISOString()
+  };
+  db.menuItems.push(item);
+  writeDB(db);
+  res.status(201).json(item);
+});
+
+app.put('/api/cardapio/itens/:itemId', adminAuth, (req, res) => {
+  const db = readDB();
+  const item = (db.menuItems || []).find(i => i.id === req.params.itemId);
+  if (!item) return res.status(404).json({ error: 'Item não encontrado' });
+  const { name, description, price, available } = req.body;
+  if (name !== undefined) item.name = name.trim();
+  if (description !== undefined) item.description = description.trim();
+  if (price !== undefined) item.price = parseFloat(price) || 0;
+  if (available !== undefined) item.available = Boolean(available);
+  writeDB(db);
+  res.json(item);
+});
+
+app.delete('/api/cardapio/itens/:itemId', adminAuth, (req, res) => {
+  const db = readDB();
+  const idx = (db.menuItems || []).findIndex(i => i.id === req.params.itemId);
+  if (idx === -1) return res.status(404).json({ error: 'Item não encontrado' });
+  db.menuItems.splice(idx, 1);
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+// Endpoint público: cardápio completo (categorias + itens disponíveis)
+app.get('/api/cardapio', (req, res) => {
+  const db = readDB();
+  const cats = (db.menuCategories || []).slice().sort((a, b) => a.order - b.order);
+  const items = (db.menuItems || []).filter(i => i.available);
+  res.json({ categories: cats, items });
+});
+
+// ─── API: Pedidos ──────────────────────────────────────────────────────────────
+
+app.get('/api/pedidos', adminAuth, (req, res) => {
+  const db = readDB();
+  const { status, tableId } = req.query;
+  let orders = (db.orders || []).slice().reverse();
+  if (status) orders = orders.filter(o => o.status === status);
+  if (tableId) orders = orders.filter(o => o.tableId === tableId);
+  res.json(orders.slice(0, 100));
+});
+
+app.post('/api/pedidos', (req, res) => {
+  const { tableId, items, note } = req.body;
+  if (!tableId || !Array.isArray(items) || items.length === 0)
+    return res.status(400).json({ error: 'tableId e items são obrigatórios' });
+
+  const db = readDB();
+  const table = db.tables.find(t => t.id === tableId);
+  if (!table) return res.status(404).json({ error: 'Mesa não encontrada' });
+
+  const dbItems = db.menuItems || [];
+  const orderItems = [];
+  for (const { itemId, qty } of items) {
+    const dbItem = dbItems.find(i => i.id === itemId && i.available);
+    if (!dbItem) return res.status(400).json({ error: `Item não encontrado: ${itemId}` });
+    orderItems.push({ itemId: dbItem.id, name: dbItem.name, qty: Math.max(1, parseInt(qty) || 1), price: dbItem.price });
+  }
+
+  const total = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const order = {
+    orderId: uuidv4(),
+    tableId: table.id,
+    tableName: table.name,
+    items: orderItems,
+    note: note?.trim().slice(0, 200) || '',
+    total,
+    status: 'novo',
+    createdAt: new Date().toISOString()
+  };
+
+  if (!db.orders) db.orders = [];
+  db.orders.push(order);
+  if (db.orders.length > 1000) db.orders = db.orders.slice(-1000);
+  writeDB(db);
+
+  io.to('balcao').emit('new:order', order);
+  res.status(201).json({ ok: true, orderId: order.orderId });
+});
+
+app.patch('/api/pedidos/:orderId/status', (req, res) => {
+  const { status } = req.body;
+  const allowed = ['novo', 'preparando', 'entregue', 'cancelado'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Status inválido' });
+
+  const db = readDB();
+  const order = (db.orders || []).find(o => o.orderId === req.params.orderId);
+  if (!order) return res.status(404).json({ error: 'Pedido não encontrado' });
+
+  order.status = status;
+  order.updatedAt = new Date().toISOString();
+  writeDB(db);
+
+  io.emit('order:status-changed', order);
+  res.json(order);
+});
+
 // ─── API: Chamadas ────────────────────────────────────────────────────────────
 
 app.get('/api/chamadas', (req, res) => {
@@ -468,7 +619,8 @@ io.on('connection', (socket) => {
       status: t.status || 'livre',
       occupiedAt: t.occupiedAt || null
     }));
-    socket.emit('init:balcao', { pendingCalls: db.activeCalls, todayCount, tableStatuses });
+    const pendingOrders = (db.orders || []).filter(o => o.status === 'novo' || o.status === 'preparando').slice(-50).reverse();
+    socket.emit('init:balcao', { pendingCalls: db.activeCalls, todayCount, tableStatuses, pendingOrders });
     console.log(`[Socket] Balcão conectado: ${socket.id}`);
   });
 

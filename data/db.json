@@ -3,6 +3,9 @@
   "menu": null,
   "activeCalls": [],
   "callHistory": [],
+  "orders": [],
+  "menuCategories": [],
+  "menuItems": [],
   "settings": {
     "barName": "Meu Bar",
     "tagline": "Bem-vindo! Estamos felizes em atendê-lo.",
