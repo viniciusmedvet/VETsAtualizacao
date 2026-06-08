@@ -1,0 +1,16 @@
+{
+  "tables": [],
+  "menu": null,
+  "activeCalls": [],
+  "callHistory": [],
+  "orders": [],
+  "menuCategories": [],
+  "menuItems": [],
+  "settings": {
+    "barName": "Meu Bar",
+    "tagline": "Bem-vindo! Estamos felizes em atendê-lo.",
+    "welcomeMessage": "Escaneie o QR code da sua mesa para chamar o garçom.",
+    "accentColor": "#f5a623",
+    "logo": null
+  }
+}

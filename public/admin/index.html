@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Chama o Garçom</title>
+<link rel="stylesheet" href="/shared/style.css">
+<style>
+  body { min-height: 100vh; background: var(--bg); }
+
+  /* ─── Login ─────────────────────────────────────────── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    padding: 2rem;
+  }
+  .login-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  .login-card .icon { font-size: 3rem; display: block; margin-bottom: 0.75rem; }
+  .login-card h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; color: var(--primary); }
+  .login-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  #login-error { color: var(--danger); font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.2em; }
+
+  /* ─── Header ────────────────────────────────────────── */
+  .admin-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .admin-header h1 { font-size: 1.15rem; font-weight: 700; }
+  .admin-header button { background: rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; padding: 0.4rem 0.9rem; border-radius: 6px; }
+  .admin-header button:hover { background: rgba(255,255,255,0.25); }
+
+  /* ─── Layout ────────────────────────────────────────── */
+  .content { max-width: 800px; margin: 0 auto; padding: 1.5rem 1.25rem; display: flex; flex-direction: column; gap: 2rem; }
+
+  /* ─── Seções ─────────────────────────────────────────── */
+  .section { }
+  .section-title {
+    font-size: 1.1rem; font-weight: 700; color: var(--primary);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  /* ─── Formulário nova mesa ───────────────────────────── */
+  .form-row { display: flex; gap: 0.75rem; }
+  .form-row input { flex: 1; }
+  .form-row button { flex-shrink: 0; white-space: nowrap; }
+
+  /* ─── Grid mesas ──────────────────────────────────────── */
+  #mesas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .mesa-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    border-top: 4px solid var(--accent);
+  }
+  .mesa-card-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .mesa-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .mesa-card-actions button {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+  .qr-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f4f4f8;
+    border: 1px solid var(--border);
+  }
+  .mesa-count { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+  /* ─── Menu ──────────────────────────────────────────── */
+  .menu-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    box-shadow: var(--shadow);
+    flex-wrap: wrap;
+  }
+  .menu-icon { font-size: 2rem; flex-shrink: 0; }
+  .menu-details { flex: 1; min-width: 0; }
+  .menu-name { font-weight: 700; color: var(--primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .menu-meta { font-size: 0.82rem; color: var(--text-muted); }
+  .menu-actions { display: flex; gap: 0.5rem; }
+
+  .upload-area {
+    background: #fff;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .upload-area:hover { border-color: var(--accent); background: #fffbf4; }
+  .upload-area .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+  .upload-area p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; }
+  .upload-area input[type=file] { display: none; }
+  #file-name-label { font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-top: 0.5rem; }
+
+  /* ─── Links de acesso ────────────────────────────────── */
+  .links-box {
+    background: var(--primary);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    color: #fff;
+  }
+  .links-box h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.9rem;
+  }
+  .link-item:last-child { border-bottom: none; }
+  .link-item a { color: var(--accent); word-break: break-all; }
+  .link-item button {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.7rem;
+    flex-shrink: 0;
+    border-radius: 4px;
+  }
+
+  /* ─── Confirm dialog ─────────────────────────────────── */
+  #confirm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .confirm-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+  }
+  .confirm-box h3 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+  .confirm-box p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .confirm-box .btns { display: flex; gap: 0.75rem; }
+  .confirm-box .btns button { flex: 1; padding: 0.75rem; font-weight: 700; }
+
+  .empty-mesas { text-align: center; color: var(--text-muted); padding: 2rem; }
+  .empty-mesas .icon { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
+
+  /* ─── Histórico ──────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    text-align: center;
+    border-top: 3px solid var(--accent);
+  }
+  .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); line-height: 1; }
+  .stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.3; }
+
+  .historico-filters {
+    display: flex; gap: 0.65rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+    align-items: center;
+  }
+  .historico-filters select,
+  .historico-filters input { width: auto; flex: 1; min-width: 120px; font-size: 0.88rem; padding: 0.5rem 0.7rem; }
+  .historico-filters button { flex-shrink: 0; font-size: 0.82rem; padding: 0.5rem 0.9rem; }
+
+  /* Gráfico de barras por hora */
+  .hour-chart {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  .hour-chart-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 60px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s; }
+  .bar-hour { font-size: 0.55rem; color: var(--text-muted); }
+
+  /* Tabela do histórico */
+  .historico-table-wrap {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .historico-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .historico-table th {
+    background: var(--primary); color: #fff;
+    padding: 0.65rem 0.75rem; text-align: left;
+    font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+  }
+  .historico-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .historico-table tr:last-child td { border-bottom: none; }
+  .historico-table tr:hover td { background: #f9f9fb; }
+  .duration-chip {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .dur-fast  { background: #d5f5e3; color: #1e8449; }
+  .dur-mid   { background: #fdebd0; color: #935116; }
+  .dur-slow  { background: #fadbd8; color: #922b21; }
+  .empty-hist { text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; font-size: 0.9rem; }
+
+  .hist-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 0; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .hist-footer small { color: var(--text-muted); font-size: 0.8rem; }
+
+  /* ─── Identidade do bar ──────────────────────────────── */
+  .identity-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .logo-preview-wrap {
+    width: 90px; height: 90px; flex-shrink: 0;
+    border-radius: 50%;
+    border: 2.5px solid var(--border);
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-size: 2.5rem;
+    position: relative;
+    cursor: pointer;
+  }
+  .logo-preview-wrap:hover::after {
+    content: '✏️';
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    border-radius: 50%;
+  }
+  .logo-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .logo-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .logo-actions small { color: var(--text-muted); font-size: 0.78rem; }
+  .logo-actions .btn-row { display: flex; gap: 0.5rem; }
+  .logo-actions .btn-row button { font-size: 0.82rem; padding: 0.45rem 0.9rem; }
+
+  .identity-fields { display: flex; flex-direction: column; gap: 0.75rem; }
+  .field-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem; }
+  .char-counter { font-size: 0.75rem; color: var(--text-muted); text-align: right; margin-top: 0.2rem; }
+
+  .identity-preview {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #fff;
+  }
+  .preview-logo-wrap {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0; font-size: 1.8rem;
+  }
+  .preview-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-text {}
+  .preview-bar-name { font-size: 1.1rem; font-weight: 800; }
+  .preview-tagline { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 0.15rem; }
+  .preview-label { font-size: 0.72rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+
+  .color-chip {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2.5px solid transparent; cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-chip:hover { transform: scale(1.18); }
+  .color-chip.active { border-color: #1a1a2e; transform: scale(1.1); }
+
+  /* Badges de status (usados nas mesas) */
+  .badge-livre    { background: #d5f5e3; color: #1e8449; }
+  .badge-ocupada  { background: #fdebd0; color: #935116; }
+  .badge-chamando { background: #fadbd8; color: #922b21; }
+
+  /* ─── Cardápio Digital ──────────────────────────────── */
+  .cat-list { display: flex; flex-direction: column; gap: 0.85rem; }
+  .cat-block {
+    background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .cat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.85rem 1.1rem; background: #f8f8fb;
+    border-bottom: 1px solid var(--border); user-select: none;
+  }
+  .cat-name { font-size: 1rem; font-weight: 700; color: var(--primary); }
+  .cat-body { padding: 0.65rem; }
+  .item-row {
+    display: flex; align-items: center; gap: 0.65rem;
+    padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .item-row:last-of-type { border-bottom: none; }
+  .item-info { flex: 1; min-width: 0; }
+  .item-name-col { font-weight: 600; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-desc-col { font-size: 0.76rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-price-col { font-weight: 700; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+  .item-btns { display: flex; gap: 0.3rem; flex-shrink: 0; }
+  .item-btns button { font-size: 0.72rem; padding: 0.28rem 0.5rem; }
+  .toggle-switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track {
+    position: absolute; inset: 0; border-radius: 99px;
+    background: #ccc; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle-track::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; left: 3px; top: 3px;
+    background: #fff; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--success); }
+  .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px); }
+  .add-item-form {
+    display: none; padding: 0.75rem 0.5rem 0.5rem;
+    border-top: 2px dashed var(--border); margin-top: 0.5rem;
+    flex-direction: column; gap: 0.55rem;
+  }
+  .add-item-form.open { display: flex; }
+  .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .empty-cat { text-align: center; color: var(--text-muted); padding: 1.25rem; font-size: 0.88rem; }
+</style>
+</head>
+<body>
+
+<!-- ─── Tela de Login ─────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <span class="icon">🔐</span>
+    <h1>Painel Admin</h1>
+    <p>Chama o Garçom — Gerenciamento</p>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      <input type="password" id="senha-input" placeholder="Senha" onkeydown="if(event.key==='Enter')login()">
+      <button class="btn-primary btn-full" onclick="login()">Entrar</button>
+    </div>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- ─── Painel Principal ──────────────────────────────────────── -->
+<div id="painel" class="hidden">
+  <header class="admin-header">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <span style="font-size:1.4rem">🍺</span>
+      <h1>Painel Admin</h1>
+    </div>
+    <button onclick="logout()">Sair</button>
+  </header>
+
+  <main class="content">
+
+    <!-- Links de acesso rápido -->
+    <div class="links-box">
+      <h3>🔗 Links de Acesso</h3>
+      <div class="link-item">
+        <span>👨‍🍳 Balcão:</span>
+        <a id="link-balcao" href="/balcao" target="_blank">/balcao</a>
+        <button onclick="copiarLink('link-balcao')">Copiar</button>
+      </div>
+    </div>
+
+    <!-- ─── Gerenciar Mesas ─── -->
+    <section class="section">
+      <div class="section-title">
+        🪑 Gerenciar Mesas
+        <button class="btn-outline" id="btn-print-all" onclick="imprimirTodos()" style="margin-left:auto;font-size:0.8rem;padding:0.35rem 0.8rem;" disabled title="Imprimir todos os QR codes">🖨️ Imprimir Todos</button>
+      </div>
+
+      <div class="form-row">
+        <input type="text" id="mesa-nome-input" placeholder="Ex: Mesa 1" maxlength="30">
+        <button class="btn-accent" onclick="criarMesa()">+ Adicionar Mesa</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;">
+        <div class="mesa-count" id="mesa-count-label">0 mesas cadastradas</div>
+        <div id="occ-summary-admin" style="font-size:0.82rem;"></div>
+      </div>
+
+      <div id="mesas-grid">
+        <div class="empty-mesas">
+          <span class="icon">🪑</span>
+          <p>Nenhuma mesa cadastrada ainda.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Identidade do Bar ─── -->
+    <section class="section">
+      <div class="section-title">🏪 Identidade do Bar</div>
+
+      <div class="identity-card">
+
+        <!-- Logo -->
+        <div class="logo-row">
+          <div class="logo-preview-wrap" id="logo-preview-wrap" onclick="document.getElementById('logo-input').click()" title="Clique para trocar o logo">
+            <span id="logo-preview-emoji">🍺</span>
+          </div>
+          <div class="logo-actions">
+            <div class="field-label">Logotipo do Estabelecimento</div>
+            <small>JPG, PNG, WEBP ou SVG — máx. 5MB<br>Aparece na página do cliente e no balcão</small>
+            <div class="btn-row">
+              <button class="btn-accent" onclick="document.getElementById('logo-input').click()">📷 Enviar Logo</button>
+              <button class="btn-danger" id="btn-remover-logo" onclick="removerLogo()" style="display:none">🗑️ Remover</button>
+            </div>
+            <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="logoSelecionado()">
+          </div>
+        </div>
+
+        <!-- Campos de texto -->
+        <div class="identity-fields">
+          <div>
+            <div class="field-label">Nome do Estabelecimento</div>
+            <input type="text" id="input-bar-name" placeholder="Ex: Bar do Zé, Choperia Boa Vista..." maxlength="80"
+              oninput="atualizarPreview();document.getElementById('count-name').textContent=this.value.length+'/80'">
+            <div class="char-counter"><span id="count-name">0</span>/80</div>
+          </div>
+          <div>
+            <div class="field-label">Slogan / Tagline <span style="font-weight:400;color:#aaa">(aparece abaixo do nome)</span></div>
+            <input type="text" id="input-tagline" placeholder="Ex: O melhor chope da cidade!" maxlength="120"
+              oninput="atualizarPreview();document.getElementById('count-tagline').textContent=this.value.length+'/120'">
+            <div class="char-counter"><span id="count-tagline">0</span>/120</div>
+          </div>
+          <div>
+            <div class="field-label">Mensagem de Boas-vindas <span style="font-weight:400;color:#aaa">(exibida na mesa do cliente)</span></div>
+            <input type="text" id="input-welcome" placeholder="Ex: Fique à vontade e aproveite!" maxlength="240"
+              oninput="document.getElementById('count-welcome').textContent=this.value.length+'/240'">
+            <div class="char-counter"><span id="count-welcome">0</span>/240</div>
+          </div>
+          <div>
+            <div class="field-label">Cor de Destaque <span style="font-weight:400;color:#aaa">(botões e destaques na página do cliente)</span></div>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.25rem;">
+              <input type="color" id="input-accent-color" value="#f5a623"
+                style="width:48px;height:40px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;padding:2px;"
+                oninput="atualizarPreview()">
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="color-presets">
+                <button class="color-chip" style="background:#f5a623;" onclick="setColor('#f5a623')" title="Âmbar"></button>
+                <button class="color-chip" style="background:#e74c3c;" onclick="setColor('#e74c3c')" title="Vermelho"></button>
+                <button class="color-chip" style="background:#27ae60;" onclick="setColor('#27ae60')" title="Verde"></button>
+                <button class="color-chip" style="background:#2980b9;" onclick="setColor('#2980b9')" title="Azul"></button>
+                <button class="color-chip" style="background:#8e44ad;" onclick="setColor('#8e44ad')" title="Roxo"></button>
+                <button class="color-chip" style="background:#e67e22;" onclick="setColor('#e67e22')" title="Laranja"></button>
+                <button class="color-chip" style="background:#1abc9c;" onclick="setColor('#1abc9c')" title="Teal"></button>
+                <button class="color-chip" style="background:#c0392b;" onclick="setColor('#c0392b')" title="Vinho"></button>
+              </div>
+            </div>
+          </div>
+          <button class="btn-success btn-full" onclick="salvarIdentidade()">💾 Salvar Identidade do Bar</button>
+        </div>
+
+        <!-- Preview ao vivo -->
+        <div>
+          <div class="preview-label">Pré-visualização (como o cliente vê)</div>
+          <div class="identity-preview">
+            <div class="preview-logo-wrap" id="preview-logo-wrap">
+              <span id="preview-logo-emoji">🍺</span>
+            </div>
+            <div class="preview-text">
+              <div class="preview-bar-name" id="preview-bar-name">Nome do Bar</div>
+              <div class="preview-tagline" id="preview-tagline">Slogan aparece aqui</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── Cardápio ─── -->
+    <section class="section">
+      <div class="section-title">📋 Cardápio</div>
+
+      <div id="menu-atual" class="hidden menu-info">
+        <span class="menu-icon" id="menu-icon">📄</span>
+        <div class="menu-details">
+          <div class="menu-name" id="menu-nome"></div>
+          <div class="menu-meta" id="menu-meta"></div>
+        </div>
+        <div class="menu-actions">
+          <a id="menu-link" href="#" target="_blank">
+            <button class="btn-outline" style="font-size:0.82rem;">Visualizar</button>
+          </a>
+          <button class="btn-danger" style="font-size:0.82rem;" onclick="removerMenu()">Remover</button>
+        </div>
+      </div>
+
+      <div class="upload-area" onclick="document.getElementById('file-input').click()" id="upload-area">
+        <span class="icon">📤</span>
+        <p>Clique para enviar o cardápio<br><small>PDF ou imagem (JPG, PNG) — máx. 20MB</small></p>
+        <input type="file" id="file-input" accept=".pdf,image/*" onchange="fileSelected()">
+        <div id="file-name-label"></div>
+        <button class="btn-accent" id="btn-upload" onclick="event.stopPropagation();enviarMenu()" style="margin-top:0.75rem;display:none;">📤 Enviar Cardápio</button>
+      </div>
+    </section>
+
+    <!-- ─── Cardápio Digital ─── -->
+    <section class="section">
+      <div class="section-title">🍽️ Cardápio Digital</div>
+
+      <div class="form-row" style="margin-bottom:1rem;">
+        <input type="text" id="cat-nome-input" placeholder="Nome da categoria (ex: Bebidas, Lanches...)" maxlength="50"
+          onkeydown="if(event.key==='Enter')criarCategoria()">
+        <button class="btn-accent" onclick="criarCategoria()">+ Categoria</button>
+      </div>
+
+      <div id="cat-list" class="cat-list"></div>
+    </section>
+
+    <!-- ─── Histórico de Chamadas ─── -->
+    <section class="section">
+      <div class="section-title">📊 Histórico de Chamadas</div>
+
+      <!-- Cards de estatísticas -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-hoje">—</div>
+          <div class="stat-label">Chamadas hoje</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Total registradas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-avg">—</div>
+          <div class="stat-label">Tempo médio de atend.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-max">—</div>
+          <div class="stat-label">Maior espera</div>
+        </div>
+        <div class="stat-card" id="stat-mesa-card">
+          <div class="stat-value" id="stat-mesa">—</div>
+          <div class="stat-label">Mesa mais ativa</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="historico-filters">
+        <select id="hist-filter-date" onchange="carregarHistorico()">
+          <option value="">Todas as datas</option>
+        </select>
+        <input type="text" id="hist-filter-mesa" placeholder="Filtrar por mesa..." oninput="carregarHistorico()" style="max-width:180px;">
+        <button class="btn-outline" onclick="carregarHistorico()">🔄 Atualizar</button>
+        <button class="btn-danger" id="btn-limpar-hist" onclick="limparHistorico()" style="margin-left:auto;">🗑️ Limpar</button>
+      </div>
+
+      <!-- Gráfico de chamadas por hora -->
+      <div class="hour-chart hidden" id="hour-chart">
+        <div class="hour-chart-title">Chamadas por hora do dia</div>
+        <div class="bars" id="hour-bars"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:0.65rem;color:var(--text-muted);">00h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">06h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">12h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">18h</span>
+          <span style="font-size:0.65rem;color:var(--text-muted);">23h</span>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="historico-table-wrap">
+        <table class="historico-table">
+          <thead>
+            <tr>
+              <th>Mesa</th>
+              <th>Chamada às</th>
+              <th>Atendida às</th>
+              <th>Espera</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="historico-tbody">
+            <tr><td colspan="5" class="empty-hist">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hist-footer">
+        <small id="hist-showing"></small>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Confirm dialog -->
+<div id="confirm-overlay" class="hidden">
+  <div class="confirm-box">
+    <h3>Confirmar exclusão</h3>
+    <p id="confirm-msg">Deseja excluir esta mesa?</p>
+    <div class="btns">
+      <button class="btn-outline" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-danger" id="confirm-btn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+let adminToken = null;
+let pendingDelete = null;
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function authHeader() {
+  return { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
+}
+
+// ─── Auth ──────────────────────────────────────────────
+async function login() {
+  const senha = document.getElementById('senha-input').value.trim();
+  if (!senha) return;
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: senha })
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('login-error').textContent = data.error || 'Senha incorreta'; return; }
+    adminToken = data.token;
+    sessionStorage.setItem('adminToken', adminToken);
+    showPainel();
+  } catch { document.getElementById('login-error').textContent = 'Erro de conexão. Tente novamente.'; }
+}
+
+function logout() {
+  sessionStorage.removeItem('adminToken');
+  adminToken = null;
+  document.getElementById('painel').classList.add('hidden');
+  document.getElementById('login-screen').style.display = '';
+}
+
+function showPainel() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('painel').classList.remove('hidden');
+  const base = window.location.origin;
+  document.getElementById('link-balcao').textContent = `${base}/balcao`;
+  document.getElementById('link-balcao').href = `${base}/balcao`;
+  carregarMesas();
+  carregarMenu();
+  carregarIdentidade();
+  carregarHistorico();
+  carregarCardapioDigital();
+}
+
+// ─── Identidade do Bar ─────────────────────────────────
+async function carregarIdentidade() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) return;
+    const s = await res.json();
+    const nameEl = document.getElementById('input-bar-name');
+    const taglineEl = document.getElementById('input-tagline');
+    const welcomeEl = document.getElementById('input-welcome');
+    nameEl.value = s.barName || '';
+    taglineEl.value = s.tagline || '';
+    welcomeEl.value = s.welcomeMessage || '';
+    document.getElementById('count-name').textContent = nameEl.value.length + '/80';
+    document.getElementById('count-tagline').textContent = taglineEl.value.length + '/120';
+    document.getElementById('count-welcome').textContent = welcomeEl.value.length + '/240';
+    if (s.accentColor) document.getElementById('input-accent-color').value = s.accentColor;
+    if (s.logo?.url) aplicarLogoPreview(s.logo.url);
+    atualizarPreview();
+  } catch {}
+}
+
+function atualizarPreview() {
+  const name = document.getElementById('input-bar-name').value || 'Nome do Bar';
+  const tagline = document.getElementById('input-tagline').value || 'Slogan aparece aqui';
+  const color = document.getElementById('input-accent-color').value;
+  document.getElementById('preview-bar-name').textContent = name;
+  document.getElementById('preview-tagline').textContent = tagline;
+  // Aplica cor de destaque no preview
+  document.getElementById('preview-logo-wrap').style.borderColor = color + '88';
+  document.querySelectorAll('.color-chip').forEach(c => {
+    c.classList.toggle('active', c.style.background === hexToRgb(color));
+  });
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function setColor(hex) {
+  document.getElementById('input-accent-color').value = hex;
+  atualizarPreview();
+}
+
+function aplicarLogoPreview(url) {
+  document.getElementById('logo-preview-wrap').innerHTML = `<img src="${url}" alt="Logo">`;
+  document.getElementById('preview-logo-wrap').innerHTML = `<img src="${url}" alt="Logo" style="width:100%;height:100%;object-fit:cover;">`;
+  document.getElementById('btn-remover-logo').style.display = 'inline-block';
+}
+
+function logoSelecionado() {
+  const file = document.getElementById('logo-input').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => aplicarLogoPreview(e.target.result);
+  reader.readAsDataURL(file);
+  enviarLogo(file);
+}
+
+async function enviarLogo(file) {
+  const form = new FormData();
+  form.append('logo', file);
+  try {
+    const res = await fetch('/api/settings/logo', {
+      method: 'POST',
+      headers: { 'x-admin-token': adminToken },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao enviar logo.', 'error'); return; }
+    aplicarLogoPreview(data.url);
+    toast('✅ Logo enviado!', 'success');
+  } catch { toast('Erro ao enviar logo.', 'error'); }
+}
+
+async function removerLogo() {
+  if (!confirm('Remover o logotipo?')) return;
+  try {
+    const res = await fetch('/api/settings/logo', { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
+    document.getElementById('logo-preview-wrap').innerHTML = '<span id="logo-preview-emoji">🍺</span>';
+    document.getElementById('preview-logo-wrap').innerHTML = '<span id="preview-logo-emoji">🍺</span>';
+    document.getElementById('btn-remover-logo').style.display = 'none';
+    toast('Logo removido.', '');
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function salvarIdentidade() {
+  const barName = document.getElementById('input-bar-name').value.trim();
+  const tagline = document.getElementById('input-tagline').value.trim();
+  const welcomeMessage = document.getElementById('input-welcome').value.trim();
+  const accentColor = document.getElementById('input-accent-color').value;
+  if (!barName) { toast('Digite o nome do estabelecimento.', 'error'); return; }
+  try {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify({ barName, tagline, welcomeMessage, accentColor })
+    });
+    if (!res.ok) { toast('Erro ao salvar.', 'error'); return; }
+    toast('✅ Identidade salva com sucesso!', 'success');
+    atualizarPreview();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+function imprimirTodos() {
+  window.open('/api/qrcode/all/print', '_blank');
+}
+
+// ─── Mesas ─────────────────────────────────────────────
+async function carregarMesas() {
+  try {
+    const res = await fetch('/api/mesas');
+    const mesas = await res.json();
+    renderMesas(mesas);
+  } catch { toast('Erro ao carregar mesas.', 'error'); }
+}
+
+function statusBadgeHtml(status) {
+  const map = {
+    livre:    { cls: 'badge-livre',    dot: '🟢', label: 'Livre'    },
+    ocupada:  { cls: 'badge-ocupada',  dot: '🟡', label: 'Ocupada'  },
+    chamando: { cls: 'badge-chamando', dot: '🔴', label: 'Chamando' },
+  };
+  const s = map[status] || map['livre'];
+  return `<span class="mesa-status-badge ${s.cls}" style="font-size:0.72rem;padding:0.15rem 0.55rem;border-radius:99px;font-weight:700;">${s.dot} ${s.label}</span>`;
+}
+
+function renderMesas(mesas) {
+  const grid = document.getElementById('mesas-grid');
+  document.getElementById('mesa-count-label').textContent = `${mesas.length}/50 mesas cadastradas`;
+  document.getElementById('btn-print-all').disabled = mesas.length === 0;
+
+  // Mini painel de ocupação
+  const livre    = mesas.filter(m => (m.status||'livre') === 'livre').length;
+  const ocupada  = mesas.filter(m => m.status === 'ocupada').length;
+  const chamando = mesas.filter(m => m.status === 'chamando').length;
+  const summaryEl = document.getElementById('occ-summary-admin');
+  if (summaryEl && mesas.length > 0) {
+    summaryEl.innerHTML = `
+      <span style="color:#1e8449;font-weight:700;">🟢 ${livre} livre${livre!==1?'s':''}</span> &nbsp;
+      <span style="color:#935116;font-weight:700;">🟡 ${ocupada} ocupada${ocupada!==1?'s':''}</span> &nbsp;
+      <span style="color:#922b21;font-weight:700;">🔴 ${chamando} chamando</span>`;
+  }
+
+  if (mesas.length === 0) {
+    grid.innerHTML = '<div class="empty-mesas"><span class="icon">🪑</span><p>Nenhuma mesa cadastrada ainda.<br>Adicione a primeira mesa acima.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  mesas.forEach(mesa => {
+    const status = mesa.status || 'livre';
+    const card = document.createElement('div');
+    card.className = 'mesa-card';
+    card.id = `mesa-card-${mesa.id}`;
+    card.innerHTML = `
+      <img class="qr-preview" src="${mesa.qrFile}" alt="QR ${mesa.name}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+        <div class="mesa-card-name">🪑 ${mesa.name}</div>
+        ${statusBadgeHtml(status)}
+      </div>
+      <div class="mesa-card-actions">
+        <button class="btn-outline" onclick="imprimirQR('${mesa.id}')">🖨️ Imprimir</button>
+        <a href="${mesa.qrFile}" download="qr-${mesa.name}.png">
+          <button class="btn-outline" style="width:100%">⬇️ Baixar</button>
+        </a>
+        <button class="btn-accent" onclick="copiarLink(null,'${mesa.mesaUrl}')">🔗 Copiar Link</button>
+        <button class="btn-danger" onclick="confirmarDelete('${mesa.id}','${mesa.name.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+async function criarMesa() {
+  const input = document.getElementById('mesa-nome-input');
+  const name = input.value.trim();
+  if (!name) { toast('Digite o nome da mesa.', 'error'); return; }
+
+  try {
+    const res = await fetch('/api/mesas', {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao criar mesa.', 'error'); return; }
+    input.value = '';
+    toast(`✅ ${data.name} criada!`, 'success');
+    carregarMesas();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+function confirmarDelete(id, name) {
+  pendingDelete = id;
+  document.getElementById('confirm-msg').textContent = `Deseja excluir "${name}"? O QR code será invalidado.`;
+  document.getElementById('confirm-overlay').classList.remove('hidden');
+  document.getElementById('confirm-btn').onclick = () => deletarMesa(id);
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+  pendingDelete = null;
+}
+
+async function deletarMesa(id) {
+  closeConfirm();
+  try {
+    const res = await fetch(`/api/mesas/${id}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao excluir mesa.', 'error'); return; }
+    toast('Mesa excluída.', '');
+    carregarMesas();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+function imprimirQR(id) {
+  window.open(`/api/qrcode/${id}/print`, '_blank');
+}
+
+// ─── Cardápio ──────────────────────────────────────────
+async function carregarMenu() {
+  try {
+    const res = await fetch('/api/menu');
+    const menu = await res.json();
+    if (menu) mostrarMenuAtual(menu);
+    else escondeMenuAtual();
+  } catch { }
+}
+
+function mostrarMenuAtual(menu) {
+  document.getElementById('menu-atual').classList.remove('hidden');
+  document.getElementById('upload-area').style.display = 'none';
+  const isPdf = menu.mimetype === 'application/pdf';
+  document.getElementById('menu-icon').textContent = isPdf ? '📄' : '🖼️';
+  document.getElementById('menu-nome').textContent = menu.originalName;
+  const date = new Date(menu.uploadedAt).toLocaleDateString('pt-BR');
+  document.getElementById('menu-meta').textContent = `Enviado em ${date} • ${isPdf ? 'PDF' : 'Imagem'}`;
+  document.getElementById('menu-link').href = menu.url;
+}
+
+function escondeMenuAtual() {
+  document.getElementById('menu-atual').classList.add('hidden');
+  document.getElementById('upload-area').style.display = '';
+}
+
+function fileSelected() {
+  const file = document.getElementById('file-input').files[0];
+  if (!file) return;
+  document.getElementById('file-name-label').textContent = `📎 ${file.name}`;
+  document.getElementById('btn-upload').style.display = 'inline-block';
+}
+
+async function enviarMenu() {
+  const file = document.getElementById('file-input').files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('cardapio', file);
+  const btn = document.getElementById('btn-upload');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const res = await fetch('/api/menu', {
+      method: 'POST',
+      headers: { 'x-admin-token': adminToken },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao enviar.', 'error'); }
+    else { toast('✅ Cardápio enviado!', 'success'); mostrarMenuAtual(data); }
+  } catch { toast('Erro ao enviar cardápio.', 'error'); }
+  finally { btn.disabled = false; btn.textContent = '📤 Enviar Cardápio'; }
+}
+
+async function removerMenu() {
+  if (!confirm('Remover o cardápio atual?')) return;
+  try {
+    const res = await fetch('/api/menu', { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
+    toast('Cardápio removido.', '');
+    escondeMenuAtual();
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-name-label').textContent = '';
+    document.getElementById('btn-upload').style.display = 'none';
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+// ─── Histórico ─────────────────────────────────────────
+let lastHistData = null;
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined) return '—';
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}min ${s}s` : `${m}min`;
+}
+
+function durClass(seconds) {
+  if (seconds === null) return '';
+  if (seconds <= 60) return 'dur-fast';
+  if (seconds <= 180) return 'dur-mid';
+  return 'dur-slow';
+}
+
+async function carregarHistorico() {
+  const date = document.getElementById('hist-filter-date').value;
+  const mesa = document.getElementById('hist-filter-mesa').value.trim();
+
+  const params = new URLSearchParams();
+  if (date) params.set('date', date);
+  if (mesa) params.set('table', mesa);
+  params.set('limit', '200');
+
+  try {
+    const res = await fetch(`/api/historico?${params}`, { headers: { 'x-admin-token': adminToken } });
+    if (!res.ok) return;
+    const data = await res.json();
+    lastHistData = data;
+
+    // Preenche seletor de datas
+    const sel = document.getElementById('hist-filter-date');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todas as datas</option>';
+    data.dates.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = fmtDate(d) + (d === new Date().toISOString().slice(0,10) ? ' (hoje)' : '');
+      if (d === cur) opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    // Stats
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayTotal = data.dates.includes(todayStr) ? data.records.filter(r => r.date === todayStr).length : 0;
+    document.getElementById('stat-hoje').textContent = date ? data.total : todayTotal;
+    document.getElementById('stat-total').textContent = data.totalAllTime;
+    document.getElementById('stat-avg').textContent = data.avgSeconds !== null ? fmtDuration(data.avgSeconds) : '—';
+    document.getElementById('stat-max').textContent = data.maxSeconds !== null ? fmtDuration(data.maxSeconds) : '—';
+    if (data.busiestTable) {
+      document.getElementById('stat-mesa').textContent = data.busiestTable.name;
+      document.getElementById('stat-mesa-card').querySelector('.stat-label').textContent =
+        `Mesa mais ativa (${data.busiestTable.count}×)`;
+    } else {
+      document.getElementById('stat-mesa').textContent = '—';
+    }
+
+    // Gráfico por hora
+    const chart = document.getElementById('hour-chart');
+    const hasData = data.byHour.some(v => v > 0);
+    if (hasData) {
+      chart.classList.remove('hidden');
+      const maxVal = Math.max(...data.byHour, 1);
+      const barsEl = document.getElementById('hour-bars');
+      barsEl.innerHTML = data.byHour.map((v, h) => `
+        <div class="bar-wrap" title="${h}h: ${v} chamada${v !== 1 ? 's' : ''}">
+          <div class="bar" style="height:${Math.round((v/maxVal)*100)}%;background:${v === Math.max(...data.byHour) ? 'var(--accent)' : '#c5d5e8'};"></div>
+        </div>`).join('');
+    } else {
+      chart.classList.add('hidden');
+    }
+
+    // Tabela
+    const tbody = document.getElementById('historico-tbody');
+    if (data.records.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-hist">📭 Nenhuma chamada encontrada para o filtro selecionado.</td></tr>`;
+      document.getElementById('hist-showing').textContent = '';
+    } else {
+      tbody.innerHTML = data.records.map(r => `
+        <tr>
+          <td><strong>${r.tableName || '—'}</strong></td>
+          <td>${fmtTime(r.calledAt)}</td>
+          <td>${fmtTime(r.attendedAt)}</td>
+          <td>${r.durationSeconds !== null
+            ? `<span class="duration-chip ${durClass(r.durationSeconds)}">${fmtDuration(r.durationSeconds)}</span>`
+            : '<span style="color:var(--text-muted)">—</span>'}</td>
+          <td style="color:var(--text-muted);font-size:0.8rem;">${fmtDate(r.date)}</td>
+        </tr>`).join('');
+      document.getElementById('hist-showing').textContent =
+        `Exibindo ${data.records.length} de ${data.total} registro${data.total !== 1 ? 's' : ''}`;
+    }
+
+  } catch (e) { toast('Erro ao carregar histórico.', 'error'); }
+}
+
+async function limparHistorico() {
+  const date = document.getElementById('hist-filter-date').value;
+  const msg = date
+    ? `Apagar todo o histórico de ${fmtDate(date)}?`
+    : 'Apagar TODO o histórico de chamadas? Esta ação não pode ser desfeita.';
+  if (!confirm(msg)) return;
+
+  const params = date ? `?date=${date}` : '';
+  try {
+    const res = await fetch(`/api/historico${params}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao limpar histórico.', 'error'); return; }
+    toast('Histórico apagado.', '');
+    carregarHistorico();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+// ─── Utilitários ───────────────────────────────────────
+function copiarLink(elId, url) {
+  const text = url || document.getElementById(elId)?.href;
+  navigator.clipboard.writeText(text).then(() => toast('Link copiado!', 'success')).catch(() => toast('Não foi possível copiar.', 'error'));
+}
+
+// ─── Cardápio Digital ──────────────────────────────────
+let categorias = [];
+let itensCardapio = [];
+
+async function carregarCardapioDigital() {
+  try {
+    const [catRes, itensRes] = await Promise.all([
+      fetch('/api/cardapio/categorias', { headers: { 'x-admin-token': adminToken } }),
+      fetch('/api/cardapio/itens', { headers: { 'x-admin-token': adminToken } })
+    ]);
+    categorias = catRes.ok ? await catRes.json() : [];
+    itensCardapio = itensRes.ok ? await itensRes.json() : [];
+    renderCardapioDigital();
+  } catch { toast('Erro ao carregar cardápio digital.', 'error'); }
+}
+
+function renderCardapioDigital() {
+  const list = document.getElementById('cat-list');
+  if (categorias.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--text-muted);padding:2rem;">
+      <span style="font-size:2rem;display:block;margin-bottom:0.5rem;">🍽️</span>
+      Nenhuma categoria. Crie a primeira acima.
+    </div>`;
+    return;
+  }
+  list.innerHTML = '';
+  categorias.forEach(cat => {
+    const catItens = itensCardapio.filter(i => i.categoryId === cat.id);
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    block.id = `cat-block-${cat.id}`;
+    const itemsHtml = catItens.length
+      ? catItens.map(item => itemRowHtml(item)).join('')
+      : `<div class="empty-cat">Nenhum item nesta categoria ainda.</div>`;
+    const safeName = cat.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    block.innerHTML = `
+      <div class="cat-header">
+        <span class="cat-name">📂 ${cat.name}</span>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:0.78rem;color:var(--text-muted);">${catItens.length} item${catItens.length !== 1 ? 's' : ''}</span>
+          <button class="btn-danger" style="font-size:0.72rem;padding:0.28rem 0.6rem;"
+            onclick="deletarCategoria('${cat.id}','${safeName}')">🗑️ Excluir</button>
+        </div>
+      </div>
+      <div class="cat-body" id="cat-body-${cat.id}">
+        <div id="items-of-${cat.id}">${itemsHtml}</div>
+        <div class="add-item-form" id="add-form-${cat.id}">
+          <div class="form-2col">
+            <input type="text" id="item-name-${cat.id}" placeholder="Nome do item *" maxlength="80">
+            <input type="text" id="item-price-${cat.id}" placeholder="Preço (ex: 12,50)" inputmode="decimal">
+          </div>
+          <input type="text" id="item-desc-${cat.id}" placeholder="Descrição opcional" maxlength="200">
+          <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;">
+              <input type="checkbox" id="item-avail-${cat.id}" checked> Disponível
+            </label>
+            <button class="btn-accent" onclick="criarItem('${cat.id}')" style="flex:1;min-width:120px;">✅ Adicionar</button>
+            <button class="btn-outline" onclick="esconderFormItem('${cat.id}')" style="font-size:0.82rem;padding:0.4rem 0.8rem;">Cancelar</button>
+          </div>
+        </div>
+        <button class="btn-outline" id="btn-add-item-${cat.id}" onclick="mostrarFormItem('${cat.id}')"
+          style="width:100%;margin-top:0.6rem;font-size:0.82rem;padding:0.5rem;">
+          + Adicionar Item nesta Categoria
+        </button>
+      </div>`;
+    list.appendChild(block);
+  });
+}
+
+function itemRowHtml(item) {
+  const price = item.price ? `R$ ${item.price.toFixed(2).replace('.', ',')}` : '—';
+  return `
+    <div class="item-row" id="item-row-${item.id}">
+      <label class="toggle-switch" title="${item.available ? 'Disponível — clique para desativar' : 'Indisponível — clique para ativar'}">
+        <input type="checkbox" ${item.available ? 'checked' : ''} onchange="toggleItem('${item.id}',this.checked)">
+        <span class="toggle-track"></span>
+      </label>
+      <div class="item-info">
+        <div class="item-name-col">${item.name}</div>
+        ${item.description ? `<div class="item-desc-col">${item.description}</div>` : ''}
+      </div>
+      <span class="item-price-col">${price}</span>
+      <div class="item-btns">
+        <button class="btn-outline" onclick="editarItem('${item.id}')">✏️</button>
+        <button class="btn-danger" onclick="deletarItem('${item.id}')">🗑️</button>
+      </div>
+    </div>`;
+}
+
+function mostrarFormItem(catId) {
+  document.getElementById(`add-form-${catId}`).classList.add('open');
+  document.getElementById(`btn-add-item-${catId}`).style.display = 'none';
+  document.getElementById(`item-name-${catId}`).focus();
+}
+
+function esconderFormItem(catId) {
+  document.getElementById(`add-form-${catId}`).classList.remove('open');
+  document.getElementById(`btn-add-item-${catId}`).style.display = '';
+  [`item-name-${catId}`, `item-price-${catId}`, `item-desc-${catId}`].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const avail = document.getElementById(`item-avail-${catId}`);
+  if (avail) avail.checked = true;
+}
+
+async function criarCategoria() {
+  const input = document.getElementById('cat-nome-input');
+  const name = input.value.trim();
+  if (!name) { toast('Digite o nome da categoria.', 'error'); return; }
+  try {
+    const res = await fetch('/api/cardapio/categorias', {
+      method: 'POST', headers: authHeader(), body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao criar categoria.', 'error'); return; }
+    input.value = '';
+    toast(`✅ Categoria "${data.name}" criada!`, 'success');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function deletarCategoria(catId, name) {
+  if (!confirm(`Excluir a categoria "${name}" e todos os seus itens?`)) return;
+  try {
+    const res = await fetch(`/api/cardapio/categorias/${catId}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao excluir categoria.', 'error'); return; }
+    toast(`Categoria "${name}" excluída.`, '');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function criarItem(catId) {
+  const name = document.getElementById(`item-name-${catId}`).value.trim();
+  const priceRaw = document.getElementById(`item-price-${catId}`).value.trim().replace(',', '.');
+  const description = document.getElementById(`item-desc-${catId}`).value.trim();
+  const available = document.getElementById(`item-avail-${catId}`).checked;
+  if (!name) { toast('Digite o nome do item.', 'error'); return; }
+  const price = priceRaw ? parseFloat(priceRaw) : 0;
+  if (priceRaw && isNaN(price)) { toast('Preço inválido. Use vírgula como separador (ex: 12,50).', 'error'); return; }
+  try {
+    const res = await fetch('/api/cardapio/itens', {
+      method: 'POST', headers: authHeader(),
+      body: JSON.stringify({ categoryId: catId, name, description, price, available })
+    });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Erro ao criar item.', 'error'); return; }
+    toast(`✅ "${data.name}" adicionado!`, 'success');
+    esconderFormItem(catId);
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function toggleItem(itemId, available) {
+  try {
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, {
+      method: 'PUT', headers: authHeader(), body: JSON.stringify({ available })
+    });
+    if (!res.ok) { toast('Erro ao atualizar.', 'error'); await carregarCardapioDigital(); return; }
+    const idx = itensCardapio.findIndex(i => i.id === itemId);
+    if (idx !== -1) itensCardapio[idx].available = available;
+    toast(available ? 'Item disponível.' : 'Item indisponível.', '');
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function editarItem(itemId) {
+  const item = itensCardapio.find(i => i.id === itemId);
+  if (!item) return;
+  const name = prompt('Nome do item:', item.name);
+  if (name === null) return;
+  if (!name.trim()) { toast('Nome obrigatório.', 'error'); return; }
+  const priceStr = prompt('Preço (R$) — use vírgula (ex: 12,50):', item.price ? item.price.toFixed(2).replace('.', ',') : '');
+  if (priceStr === null) return;
+  const description = prompt('Descrição (opcional):', item.description || '');
+  if (description === null) return;
+  const price = priceStr.trim() ? parseFloat(priceStr.trim().replace(',', '.')) : 0;
+  if (priceStr.trim() && isNaN(price)) { toast('Preço inválido.', 'error'); return; }
+  try {
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, {
+      method: 'PUT', headers: authHeader(),
+      body: JSON.stringify({ name: name.trim(), description: description.trim(), price, available: item.available })
+    });
+    if (!res.ok) { toast('Erro ao atualizar item.', 'error'); return; }
+    toast('✅ Item atualizado!', 'success');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+async function deletarItem(itemId) {
+  const item = itensCardapio.find(i => i.id === itemId);
+  if (!confirm(`Excluir "${item?.name || 'este item'}"?`)) return;
+  try {
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, { method: 'DELETE', headers: authHeader() });
+    if (!res.ok) { toast('Erro ao excluir.', 'error'); return; }
+    toast('Item excluído.', '');
+    await carregarCardapioDigital();
+  } catch { toast('Erro de conexão.', 'error'); }
+}
+
+// ─── Auto-login ─────────────────────────────────────────
+window.onload = () => {
+  const saved = sessionStorage.getItem('adminToken');
+  if (saved) { adminToken = saved; showPainel(); }
+  document.getElementById('senha-input').focus();
+};
+</script>
+</body>
+</html>

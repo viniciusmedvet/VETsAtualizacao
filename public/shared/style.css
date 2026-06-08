@@ -1,0 +1,159 @@
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #1a1a2e;
+  --primary-light: #16213e;
+  --accent: #f5a623;
+  --accent-dark: #e0941a;
+  --success: #27ae60;
+  --danger: #e74c3c;
+  --text: #2d2d2d;
+  --text-muted: #777;
+  --bg: #f4f4f8;
+  --white: #ffffff;
+  --border: #dde1e7;
+  --shadow: 0 2px 12px rgba(0,0,0,0.10);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.25rem;
+  transition: background 0.2s, transform 0.1s, opacity 0.2s;
+}
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+input, select {
+  font-family: inherit;
+  font-size: 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  width: 100%;
+  background: var(--white);
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+/* ─── Utility ──────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); font-size: 0.9rem; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+.btn-primary   { background: var(--primary); color: var(--white); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-light); }
+
+.btn-accent    { background: var(--accent); color: var(--white); font-weight: 600; }
+.btn-accent:hover:not(:disabled) { background: var(--accent-dark); }
+
+.btn-success   { background: var(--success); color: var(--white); }
+.btn-success:hover:not(:disabled) { background: #219a52; }
+
+.btn-danger    { background: var(--danger); color: var(--white); }
+.btn-danger:hover:not(:disabled) { background: #c0392b; }
+
+.btn-outline   { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+.btn-outline:hover:not(:disabled) { background: var(--border); }
+
+.btn-full { width: 100%; }
+
+/* ─── Card ─────────────────────────────────────────────────────── */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+
+/* ─── Header ───────────────────────────────────────────────────── */
+.app-header {
+  background: var(--primary);
+  color: var(--white);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.app-header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: 0.01em; }
+.app-header .emoji { font-size: 1.4rem; margin-right: 0.5rem; }
+
+/* ─── Status dot ───────────────────────────────────────────────── */
+.status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #ccc;
+  transition: background 0.3s;
+}
+.status-dot.online { background: #2ecc71; }
+.status-dot.offline { background: var(--danger); }
+
+/* ─── Toast ─────────────────────────────────────────────────────── */
+#toast-container {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;
+  pointer-events: none;
+}
+.toast {
+  background: var(--primary); color: var(--white);
+  padding: 0.75rem 1.25rem; border-radius: var(--radius-sm);
+  font-size: 0.95rem; box-shadow: var(--shadow);
+  animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
+  pointer-events: none;
+}
+.toast.success { background: var(--success); }
+.toast.error   { background: var(--danger); }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ─── Pulse animation ──────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(245,166,35,0.6); }
+  70%  { box-shadow: 0 0 0 16px rgba(245,166,35,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,166,35,0); }
+}
+.pulse { animation: pulse-ring 1.5s infinite; }
+
+/* ─── Main container ───────────────────────────────────────────── */
+.main-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
