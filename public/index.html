@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<title>Chama o Garçom — App para Bares</title>
+<link rel="stylesheet" href="/shared/style.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
+    color: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex; flex-direction: column;
+  }
+
+  /* ── Header ───────────────────────────────────────── */
+  .top-bar {
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .top-bar .logo { font-size: 1.6rem; }
+  .top-bar .brand { font-size: 1rem; font-weight: 800; color: #fff; }
+
+  /* ── Hero ─────────────────────────────────────────── */
+  .hero {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem 1.5rem 3rem;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .hero-icon {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.8rem;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+
+  .hero h1 {
+    font-size: 2rem; font-weight: 900; line-height: 1.15;
+    max-width: 380px;
+  }
+  .hero h1 span { color: #f5a623; }
+
+  .hero p {
+    font-size: 1rem; color: rgba(255,255,255,0.65);
+    max-width: 340px; line-height: 1.6;
+  }
+
+  /* ── CTA ──────────────────────────────────────────── */
+  .cta-box {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.75rem;
+    width: 100%; max-width: 340px;
+  }
+
+  .btn-google {
+    display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+    width: 100%; padding: 1rem 1.5rem;
+    background: #fff; color: #1a1a2e;
+    border: none; border-radius: 14px;
+    font-size: 1.05rem; font-weight: 700;
+    cursor: pointer; text-decoration: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-google:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .btn-google svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+  .cta-note {
+    font-size: 0.8rem; color: rgba(255,255,255,0.4);
+  }
+
+  /* ── Features ─────────────────────────────────────── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    width: 100%; max-width: 680px;
+    margin-top: 0.5rem;
+  }
+  .feat {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 1.1rem;
+    text-align: left;
+  }
+  .feat-icon { font-size: 1.6rem; display: block; margin-bottom: 0.4rem; }
+  .feat h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .feat p  { font-size: 0.78rem; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+  /* ── Footer ──────────────────────────────────────── */
+  footer {
+    padding: 1.25rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* ── Erro de auth ─────────────────────────────────── */
+  .error-banner {
+    background: rgba(231,76,60,0.2);
+    border: 1px solid rgba(231,76,60,0.5);
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    color: #ffaaaa;
+    width: 100%; max-width: 340px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="logo">🍺</span>
+  <span class="brand">Chama o Garçom</span>
+</div>
+
+<main class="hero">
+  <div class="hero-icon">🔔</div>
+
+  <h1>Atendimento de mesas<br>sem complicação</h1>
+
+  <p>Cada estabelecimento tem sua própria conta isolada. Clientes escaneiam o QR code da mesa e chamam o garçom em tempo real.</p>
+
+  <div class="cta-box">
+    <div id="erro-banner" class="error-banner" style="display:none">
+      ❌ Erro ao entrar com Google. Tente novamente.
+    </div>
+
+    <a class="btn-google" href="/auth/google">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Entrar com Google
+    </a>
+    <span class="cta-note">Cada conta Google = um estabelecimento isolado</span>
+  </div>
+
+  <div class="features">
+    <div class="feat">
+      <span class="feat-icon">🔔</span>
+      <h3>Chamada em tempo real</h3>
+      <p>O garçom recebe o alerta instantaneamente com som e vibração.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">📱</span>
+      <h3>QR code por mesa</h3>
+      <p>Gere e imprima o QR de cada mesa direto do painel admin.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">🍽️</span>
+      <h3>Cardápio digital</h3>
+      <p>Monte categorias e itens. O cliente pede pelo celular.</p>
+    </div>
+    <div class="feat">
+      <span class="feat-icon">🔒</span>
+      <h3>Dados 100% isolados</h3>
+      <p>Cada bar tem sua própria conta. Nenhuma informação é compartilhada.</p>
+    </div>
+  </div>
+</main>
+
+<footer>Chama o Garçom — tecnologia para o seu bar</footer>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('erro') === 'auth') {
+    document.getElementById('erro-banner').style.display = '';
+  }
+</script>
+</body>
+</html>

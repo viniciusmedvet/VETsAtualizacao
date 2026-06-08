@@ -341,7 +341,9 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const tableId = window.location.pathname.split('/')[2];
+const parts = window.location.pathname.split('/');
+const estId = parts[2];
+const tableId = parts[4];
 const COOLDOWN_SECONDS = 60;
 let socket, cooldownTimer;
 let cart = {}; // itemId → { item, qty }
@@ -401,13 +403,13 @@ function startCooldown(s) {
 function chamarGarcom() {
   if (!socket?.connected) { toast('Sem conexão. Recarregue.', 'error'); return; }
   setButtonState('loading');
-  socket.emit('table:call', { tableId });
+  socket.emit('table:call', { tableId, estId });
 }
 
 // ── Cardápio PDF/imagem ───────────────────────────────────
 async function verCardapioPDF() {
   try {
-    const res = await fetch('/api/menu');
+    const res = await fetch(`/api/pub/${estId}/menu`);
     const menu = await res.json();
     if (!menu) { toast('Nenhum cardápio disponível.', 'error'); return; }
     if (menu.mimetype === 'application/pdf') {
@@ -434,7 +436,7 @@ function fecharCardapioDigital() {
 
 async function carregarMenuDigital() {
   try {
-    const res = await fetch('/api/cardapio');
+    const res = await fetch(`/api/pub/${estId}/cardapio`);
     menuData = await res.json();
     renderCatTabs();
     activeCategory = menuData.categories[0]?.id || null;
@@ -560,7 +562,7 @@ async function enviarPedido() {
   const btn = document.getElementById('btn-confirmar-pedido');
   btn.disabled = true; btn.textContent = '⏳ Enviando...';
   try {
-    const res = await fetch('/api/pedidos', {
+    const res = await fetch(`/api/pub/${estId}/pedidos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -611,7 +613,7 @@ function adjustColor(hex, amt) {
 // ── Socket ────────────────────────────────────────────────
 function connectSocket() {
   socket = io({ transports: ['websocket', 'polling'] });
-  socket.on('connect', () => socket.emit('join:mesa', { tableId }));
+  socket.on('connect', () => socket.emit('join:mesa', { tableId, estId }));
   socket.on('call:confirmed', ({ repeated }) => {
     if (repeated) { setButtonState('success'); showFeedback('Garçom já foi notificado! Aguarde.', 'info'); }
     else { setButtonState('success'); showFeedback('✅ Garçom notificado! Ele virá em breve.', 'success'); startCooldown(COOLDOWN_SECONDS); }
@@ -633,13 +635,13 @@ function connectSocket() {
 
 // ── Init ──────────────────────────────────────────────────
 async function init() {
-  if (!tableId) { document.getElementById('erro-mesa').classList.remove('hidden'); return; }
+  if (!tableId || !estId) { document.getElementById('erro-mesa').classList.remove('hidden'); return; }
   try {
     const [tRes, sRes, mRes, cRes] = await Promise.all([
-      fetch(`/api/mesas/${tableId}`),
-      fetch('/api/settings'),
-      fetch('/api/menu'),
-      fetch('/api/cardapio')
+      fetch(`/api/pub/${estId}/mesas/${tableId}`),
+      fetch(`/api/pub/${estId}/settings`),
+      fetch(`/api/pub/${estId}/menu`),
+      fetch(`/api/pub/${estId}/cardapio`)
     ]);
     if (!tRes.ok) { document.getElementById('erro-mesa').classList.remove('hidden'); return; }
 

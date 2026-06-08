@@ -398,17 +398,11 @@
 </head>
 <body>
 
-<!-- ─── Tela de Login ─────────────────────────────────────────── -->
-<div id="login-screen">
-  <div class="login-card">
-    <span class="icon">🔐</span>
-    <h1>Painel Admin</h1>
-    <p>Chama o Garçom — Gerenciamento</p>
-    <div style="display:flex;flex-direction:column;gap:0.75rem;">
-      <input type="password" id="senha-input" placeholder="Senha" onkeydown="if(event.key==='Enter')login()">
-      <button class="btn-primary btn-full" onclick="login()">Entrar</button>
-    </div>
-    <div id="login-error"></div>
+<!-- ─── Carregando ──────────────────────────────────────────────── -->
+<div id="loading-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e,#0f3460);">
+  <div style="text-align:center;color:#fff;">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🍺</div>
+    <div style="font-size:1rem;opacity:0.6;">Carregando...</div>
   </div>
 </div>
 
@@ -419,7 +413,13 @@
       <span style="font-size:1.4rem">🍺</span>
       <h1>Painel Admin</h1>
     </div>
-    <button onclick="logout()">Sair</button>
+    <div style="display:flex;align-items:center;gap:0.65rem;">
+      <div id="user-info" style="display:flex;align-items:center;gap:0.5rem;">
+        <div id="user-avatar" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:0.9rem;">👤</div>
+        <span id="user-name" style="font-size:0.82rem;color:rgba(255,255,255,0.75);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      </div>
+      <button onclick="logout()">Sair</button>
+    </div>
   </header>
 
   <main class="content">
@@ -669,7 +669,7 @@
 <div id="toast-container"></div>
 
 <script>
-let adminToken = null;
+let meInfo = null; // { estId, email, name, picture, balcaoUrl }
 let pendingDelete = null;
 
 function toast(msg, type = '') {
@@ -680,41 +680,33 @@ function toast(msg, type = '') {
   setTimeout(() => el.remove(), 3500);
 }
 
-function authHeader() {
-  return { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
+function jsonHeaders() {
+  return { 'Content-Type': 'application/json' };
 }
 
 // ─── Auth ──────────────────────────────────────────────
-async function login() {
-  const senha = document.getElementById('senha-input').value.trim();
-  if (!senha) return;
+async function logout() {
   try {
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: senha })
-    });
-    const data = await res.json();
-    if (!res.ok) { document.getElementById('login-error').textContent = data.error || 'Senha incorreta'; return; }
-    adminToken = data.token;
-    sessionStorage.setItem('adminToken', adminToken);
-    showPainel();
-  } catch { document.getElementById('login-error').textContent = 'Erro de conexão. Tente novamente.'; }
-}
-
-function logout() {
-  sessionStorage.removeItem('adminToken');
-  adminToken = null;
-  document.getElementById('painel').classList.add('hidden');
-  document.getElementById('login-screen').style.display = '';
+    await fetch('/auth/logout', { method: 'POST' });
+  } catch {}
+  window.location.href = '/';
 }
 
 function showPainel() {
-  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('painel').classList.remove('hidden');
-  const base = window.location.origin;
-  document.getElementById('link-balcao').textContent = `${base}/balcao`;
-  document.getElementById('link-balcao').href = `${base}/balcao`;
+
+  if (meInfo) {
+    const balcaoUrl = meInfo.balcaoUrl || `${window.location.origin}/b/${meInfo.estId}/balcao`;
+    document.getElementById('link-balcao').textContent = balcaoUrl;
+    document.getElementById('link-balcao').href = balcaoUrl;
+    document.getElementById('user-name').textContent = meInfo.name || meInfo.email || '';
+    if (meInfo.picture) {
+      document.getElementById('user-avatar').innerHTML =
+        `<img src="${meInfo.picture}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">`;
+    }
+  }
+
   carregarMesas();
   carregarMenu();
   carregarIdentidade();
@@ -789,7 +781,6 @@ async function enviarLogo(file) {
   try {
     const res = await fetch('/api/settings/logo', {
       method: 'POST',
-      headers: { 'x-admin-token': adminToken },
       body: form
     });
     const data = await res.json();
@@ -802,7 +793,7 @@ async function enviarLogo(file) {
 async function removerLogo() {
   if (!confirm('Remover o logotipo?')) return;
   try {
-    const res = await fetch('/api/settings/logo', { method: 'DELETE', headers: authHeader() });
+    const res = await fetch('/api/settings/logo', { method: 'DELETE', headers: jsonHeaders() });
     if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
     document.getElementById('logo-preview-wrap').innerHTML = '<span id="logo-preview-emoji">🍺</span>';
     document.getElementById('preview-logo-wrap').innerHTML = '<span id="preview-logo-emoji">🍺</span>';
@@ -820,7 +811,7 @@ async function salvarIdentidade() {
   try {
     const res = await fetch('/api/settings', {
       method: 'POST',
-      headers: authHeader(),
+      headers: jsonHeaders(),
       body: JSON.stringify({ barName, tagline, welcomeMessage, accentColor })
     });
     if (!res.ok) { toast('Erro ao salvar.', 'error'); return; }
@@ -907,7 +898,7 @@ async function criarMesa() {
   try {
     const res = await fetch('/api/mesas', {
       method: 'POST',
-      headers: authHeader(),
+      headers: jsonHeaders(),
       body: JSON.stringify({ name })
     });
     const data = await res.json();
@@ -933,7 +924,7 @@ function closeConfirm() {
 async function deletarMesa(id) {
   closeConfirm();
   try {
-    const res = await fetch(`/api/mesas/${id}`, { method: 'DELETE', headers: authHeader() });
+    const res = await fetch(`/api/mesas/${id}`, { method: 'DELETE', headers: jsonHeaders() });
     if (!res.ok) { toast('Erro ao excluir mesa.', 'error'); return; }
     toast('Mesa excluída.', '');
     carregarMesas();
@@ -987,7 +978,6 @@ async function enviarMenu() {
   try {
     const res = await fetch('/api/menu', {
       method: 'POST',
-      headers: { 'x-admin-token': adminToken },
       body: form
     });
     const data = await res.json();
@@ -1000,7 +990,7 @@ async function enviarMenu() {
 async function removerMenu() {
   if (!confirm('Remover o cardápio atual?')) return;
   try {
-    const res = await fetch('/api/menu', { method: 'DELETE', headers: authHeader() });
+    const res = await fetch('/api/menu', { method: 'DELETE', headers: jsonHeaders() });
     if (!res.ok) { toast('Erro ao remover.', 'error'); return; }
     toast('Cardápio removido.', '');
     escondeMenuAtual();
@@ -1049,7 +1039,7 @@ async function carregarHistorico() {
   params.set('limit', '200');
 
   try {
-    const res = await fetch(`/api/historico?${params}`, { headers: { 'x-admin-token': adminToken } });
+    const res = await fetch(`/api/historico?${params}`);
     if (!res.ok) return;
     const data = await res.json();
     lastHistData = data;
@@ -1128,7 +1118,7 @@ async function limparHistorico() {
 
   const params = date ? `?date=${date}` : '';
   try {
-    const res = await fetch(`/api/historico${params}`, { method: 'DELETE', headers: authHeader() });
+    const res = await fetch(`/api/historico${params}`, { method: 'DELETE', headers: jsonHeaders() });
     if (!res.ok) { toast('Erro ao limpar histórico.', 'error'); return; }
     toast('Histórico apagado.', '');
     carregarHistorico();
@@ -1148,8 +1138,8 @@ let itensCardapio = [];
 async function carregarCardapioDigital() {
   try {
     const [catRes, itensRes] = await Promise.all([
-      fetch('/api/cardapio/categorias', { headers: { 'x-admin-token': adminToken } }),
-      fetch('/api/cardapio/itens', { headers: { 'x-admin-token': adminToken } })
+      fetch('/api/cardapio/categorias'),
+      fetch('/api/cardapio/itens')
     ]);
     categorias = catRes.ok ? await catRes.json() : [];
     itensCardapio = itensRes.ok ? await itensRes.json() : [];
@@ -1253,7 +1243,7 @@ async function criarCategoria() {
   if (!name) { toast('Digite o nome da categoria.', 'error'); return; }
   try {
     const res = await fetch('/api/cardapio/categorias', {
-      method: 'POST', headers: authHeader(), body: JSON.stringify({ name })
+      method: 'POST', headers: jsonHeaders(), body: JSON.stringify({ name })
     });
     const data = await res.json();
     if (!res.ok) { toast(data.error || 'Erro ao criar categoria.', 'error'); return; }
@@ -1266,7 +1256,7 @@ async function criarCategoria() {
 async function deletarCategoria(catId, name) {
   if (!confirm(`Excluir a categoria "${name}" e todos os seus itens?`)) return;
   try {
-    const res = await fetch(`/api/cardapio/categorias/${catId}`, { method: 'DELETE', headers: authHeader() });
+    const res = await fetch(`/api/cardapio/categorias/${catId}`, { method: 'DELETE', headers: jsonHeaders() });
     if (!res.ok) { toast('Erro ao excluir categoria.', 'error'); return; }
     toast(`Categoria "${name}" excluída.`, '');
     await carregarCardapioDigital();
@@ -1283,7 +1273,7 @@ async function criarItem(catId) {
   if (priceRaw && isNaN(price)) { toast('Preço inválido. Use vírgula como separador (ex: 12,50).', 'error'); return; }
   try {
     const res = await fetch('/api/cardapio/itens', {
-      method: 'POST', headers: authHeader(),
+      method: 'POST', headers: jsonHeaders(),
       body: JSON.stringify({ categoryId: catId, name, description, price, available })
     });
     const data = await res.json();
@@ -1297,7 +1287,7 @@ async function criarItem(catId) {
 async function toggleItem(itemId, available) {
   try {
     const res = await fetch(`/api/cardapio/itens/${itemId}`, {
-      method: 'PUT', headers: authHeader(), body: JSON.stringify({ available })
+      method: 'PUT', headers: jsonHeaders(), body: JSON.stringify({ available })
     });
     if (!res.ok) { toast('Erro ao atualizar.', 'error'); await carregarCardapioDigital(); return; }
     const idx = itensCardapio.findIndex(i => i.id === itemId);
@@ -1320,7 +1310,7 @@ async function editarItem(itemId) {
   if (priceStr.trim() && isNaN(price)) { toast('Preço inválido.', 'error'); return; }
   try {
     const res = await fetch(`/api/cardapio/itens/${itemId}`, {
-      method: 'PUT', headers: authHeader(),
+      method: 'PUT', headers: jsonHeaders(),
       body: JSON.stringify({ name: name.trim(), description: description.trim(), price, available: item.available })
     });
     if (!res.ok) { toast('Erro ao atualizar item.', 'error'); return; }
@@ -1333,18 +1323,21 @@ async function deletarItem(itemId) {
   const item = itensCardapio.find(i => i.id === itemId);
   if (!confirm(`Excluir "${item?.name || 'este item'}"?`)) return;
   try {
-    const res = await fetch(`/api/cardapio/itens/${itemId}`, { method: 'DELETE', headers: authHeader() });
+    const res = await fetch(`/api/cardapio/itens/${itemId}`, { method: 'DELETE', headers: jsonHeaders() });
     if (!res.ok) { toast('Erro ao excluir.', 'error'); return; }
     toast('Item excluído.', '');
     await carregarCardapioDigital();
   } catch { toast('Erro de conexão.', 'error'); }
 }
 
-// ─── Auto-login ─────────────────────────────────────────
-window.onload = () => {
-  const saved = sessionStorage.getItem('adminToken');
-  if (saved) { adminToken = saved; showPainel(); }
-  document.getElementById('senha-input').focus();
+// ─── Init: verifica sessão ──────────────────────────────
+window.onload = async () => {
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) { window.location.href = '/'; return; }
+    meInfo = await res.json();
+    showPainel();
+  } catch { window.location.href = '/'; }
 };
 </script>
 </body>

@@ -331,6 +331,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+const estId = window.location.pathname.split('/')[2];
 let audioCtx = null;
 let activeCalls = [];
 let tableStatuses = {}; // tableId → { name, status, occupiedAt }
@@ -443,7 +444,7 @@ function renderCalls() {
 
 function atender(tableId, callId, btn) {
   btn.disabled = true; btn.textContent = '⏳';
-  socket.emit('call:attend', { tableId });
+  socket.emit('call:attend', { tableId, estId });
 }
 
 function removeCallCard(callId) {
@@ -558,7 +559,7 @@ function updateMesaCard(tableId) {
 
 // ── Ações de mesa ────────────────────────────────────────
 function abrirMesa(tableId, name) {
-  socket.emit('table:open', { tableId });
+  socket.emit('table:open', { tableId, estId });
   toast(`${name} marcada como ocupada.`);
 }
 
@@ -568,14 +569,14 @@ function fecharMesa(tableId, name) {
     msg: 'Confirma que os clientes saíram e a mesa está livre?',
     btns: [
       { label: 'Cancelar', cls: 'btn-outline', action: closeModal },
-      { label: 'Liberar Mesa', cls: 'btn-danger', action: () => { socket.emit('table:close', { tableId }); closeModal(); toast(`${name} liberada.`); } }
+      { label: 'Liberar Mesa', cls: 'btn-danger', action: () => { socket.emit('table:close', { tableId, estId }); closeModal(); toast(`${name} liberada.`); } }
     ]
   });
 }
 
 function atenderDireto(tableId) {
   const call = activeCalls.find(c => c.tableId === tableId);
-  if (call) socket.emit('call:attend', { tableId });
+  if (call) socket.emit('call:attend', { tableId, estId });
 }
 
 // ── Modal ────────────────────────────────────────────────
@@ -683,7 +684,7 @@ function updateOrderCard(order) {
 
 async function mudarStatusPedido(orderId, status) {
   try {
-    const res = await fetch(`/api/pedidos/${orderId}/status`, {
+    const res = await fetch(`/api/pub/${estId}/pedidos/${orderId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
@@ -700,7 +701,7 @@ function connectSocket() {
   socket.on('connect', () => {
     document.getElementById('status-dot').className = 'status-dot online';
     document.getElementById('status-label').textContent = 'Conectado';
-    socket.emit('join:balcao');
+    socket.emit('join:balcao', { estId });
   });
 
   socket.on('disconnect', () => {
@@ -771,8 +772,9 @@ function connectSocket() {
 
 // ── Identidade do bar ────────────────────────────────────
 (async () => {
+  if (!estId) return;
   try {
-    const res = await fetch('/api/settings');
+    const res = await fetch(`/api/pub/${estId}/settings`);
     if (!res.ok) return;
     const s = await res.json();
     if (s.barName) {
